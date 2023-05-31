@@ -142,7 +142,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         function PictView(pFable, pOptions, pServiceHash) {
           var _this;
           _classCallCheck(this, PictView);
-          var tmpOptions = Object.assign({}, defaultPictViewSettings, pOptions);
+          var tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           _this = _super.call(this, pFable, tmpOptions, pServiceHash);
           _this.serviceType = 'PictView';
 

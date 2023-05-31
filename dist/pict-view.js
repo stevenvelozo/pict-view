@@ -124,7 +124,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
       };
       class PictView extends libFableServiceBase {
         constructor(pFable, pOptions, pServiceHash) {
-          let tmpOptions = Object.assign({}, defaultPictViewSettings, pOptions);
+          let tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           super(pFable, tmpOptions, pServiceHash);
           this.serviceType = 'PictView';
 

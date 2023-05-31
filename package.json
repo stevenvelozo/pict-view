@@ -1,0 +1,50 @@
+{
+    "name": "pict-view",
+    "version": "1.0.1",
+    "description": "Pict View Base Class",
+    "main": "source/Pict-View.js",
+    "scripts": {
+        "test": "./node_modules/.bin/mocha -u tdd -R spec",
+        "start": "node source/Pict-View.js",
+        "coverage": "./node_modules/.bin/nyc --reporter=lcov --reporter=text-lcov ./node_modules/mocha/bin/_mocha -- -u tdd -R spec",
+        "build": "npx quack build",
+        "docker-dev-build": "docker build ./ -f Dockerfile_LUXURYCode -t pict-view-image:local",
+        "docker-dev-run": "docker run -it -d --name pict-view-dev -p 30001:8080 -p 38086:8086 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/pict-view\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" pict-view-image:local",
+        "docker-dev-shell": "docker exec -it pict-view-dev /bin/bash"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/stevenvelozo/pict-view.git"
+    },
+    "author": "steven velozo <steven@velozo.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/stevenvelozo/pict-view/issues"
+    },
+    "homepage": "https://github.com/stevenvelozo/pict-view#readme",
+    "devDependencies": {
+        "browser-env": "^3.3.0",
+        "quackage": "^1.0.13"
+    },
+    "mocha": {
+        "diff": true,
+        "extension": [
+            "js"
+        ],
+        "package": "./package.json",
+        "reporter": "spec",
+        "slow": "75",
+        "timeout": "5000",
+        "ui": "tdd",
+        "watch-files": [
+            "source/**/*.js",
+            "test/**/*.js"
+        ],
+        "watch-ignore": [
+            "lib/vendor"
+        ]
+    },
+    "dependencies": {
+        "fable-serviceproviderbase": "^3.0.5"
+    }
+}

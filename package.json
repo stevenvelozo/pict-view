@@ -1,6 +1,6 @@
 {
     "name": "pict-view",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {
@@ -24,7 +24,7 @@
     "homepage": "https://github.com/stevenvelozo/pict-view#readme",
     "devDependencies": {
         "browser-env": "^3.3.0",
-        "quackage": "^1.0.13"
+        "quackage": "^1.0.14"
     },
     "mocha": {
         "diff": true,
@@ -45,6 +45,6 @@
         ]
     },
     "dependencies": {
-        "fable-serviceproviderbase": "^3.0.5"
+        "fable-serviceproviderbase": "^3.0.7"
     }
 }

@@ -113,8 +113,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
         // Pull back a few things
         this.log = this.fable.log;
+        this.servicesMap = this.fable.serviceMap;
         this.services = this.fable.services;
-        this.defaultServices = this.fable.defaultServices;
       });
       _defineProperty(FableServiceProviderBase, "isFableService", true);
       module.exports = FableServiceProviderBase;

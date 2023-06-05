@@ -30,8 +30,7 @@ class PictView extends libFableServiceBase
 
 		// Convenience and consistency naming
 		this.pict = this.fable;
-
-		// Wire in the essential Pict service
+		// Wire in the essential Pict state
 		this.AppData = this.fable.AppData;
 
 		// Load all templates from the array in the options

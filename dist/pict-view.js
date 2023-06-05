@@ -128,6 +128,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           super(pFable, tmpOptions, pServiceHash);
           this.serviceType = 'PictView';
 
+          // Convenience and consistency naming
+          this.pict = this.fable;
+
           // Wire in the essential Pict service
           this.AppData = this.fable.AppData;
 
@@ -177,21 +180,31 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.initialize();
           }
           if (this.options.RenderOnLoad) {
+            this.onBeforeInitialRender();
             this.render(this.options.DefaultRenderable, this.options.DefaultDestinationAddress, this.options.DefaultTemplateRecordAddress);
-            this.postInitialRenderInitialize();
+            this.onPostInitialRender();
           }
         }
+        onBeforeInitialize() {
+          return true;
+        }
+
+        // Used for controls and the like to initialize their state
         internalInitialize() {
           return true;
         }
-        postInitialRenderInitialize() {
+        onAfterInitialize() {
           return true;
         }
         initialize() {
+          this.onBeforeInitialize();
+          // Potentially do something with the return values of these?
           this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
           this.internalInitialize();
           this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
+          this.onAfterInitialRender();
         }
+        onBeforeInitialRender() {}
         render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
           if (!tmpRenderableHash) {
@@ -212,6 +225,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           let tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
           let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
           return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+        }
+        onAfterInitialRender() {
+          return true;
         }
         renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : false;

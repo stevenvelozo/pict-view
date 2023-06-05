@@ -28,6 +28,9 @@ class PictView extends libFableServiceBase
 		super(pFable, tmpOptions, pServiceHash);
 		this.serviceType = 'PictView';
 
+		// Convenience and consistency naming
+		this.pict = this.fable;
+
 		// Wire in the essential Pict service
 		this.AppData = this.fable.AppData;
 
@@ -97,26 +100,41 @@ class PictView extends libFableServiceBase
 		}
 		if (this.options.RenderOnLoad)
 		{
+			this.onBeforeInitialRender();
 			this.render(this.options.DefaultRenderable, this.options.DefaultDestinationAddress, this.options.DefaultTemplateRecordAddress);
-			this.postInitialRenderInitialize();
+			this.onPostInitialRender();
 		}
 	}
 
+	onBeforeInitialize()
+	{
+		return true;
+	}
+
+	// Used for controls and the like to initialize their state
 	internalInitialize()
 	{
 		return true;
 	}
 
-	postInitialRenderInitialize()
+	onAfterInitialize()
 	{
 		return true;
 	}
 
 	initialize()
 	{
+		this.onBeforeInitialize();
+		// Potentially do something with the return values of these?
 		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} beginning initialization...`);
 		this.internalInitialize();
 		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
+		this.onAfterInitialRender();
+	}
+
+	onBeforeInitialRender()
+	{
+
 	}
 
 	render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress)
@@ -154,6 +172,11 @@ class PictView extends libFableServiceBase
 		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 		let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
 		return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+	}
+
+	onAfterInitialRender()
+	{
+		return true;
 	}
 
 	renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback)

@@ -146,6 +146,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           _this = _super.call(this, pFable, tmpOptions, pServiceHash);
           _this.serviceType = 'PictView';
 
+          // Convenience and consistency naming
+          _this.pict = _this.fable;
+
           // Wire in the essential Pict service
           _this.AppData = _this.fable.AppData;
 
@@ -195,28 +198,42 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             _this.initialize();
           }
           if (_this.options.RenderOnLoad) {
+            _this.onBeforeInitialRender();
             _this.render(_this.options.DefaultRenderable, _this.options.DefaultDestinationAddress, _this.options.DefaultTemplateRecordAddress);
-            _this.postInitialRenderInitialize();
+            _this.onPostInitialRender();
           }
           return _this;
         }
         _createClass(PictView, [{
+          key: "onBeforeInitialize",
+          value: function onBeforeInitialize() {
+            return true;
+          }
+
+          // Used for controls and the like to initialize their state
+        }, {
           key: "internalInitialize",
           value: function internalInitialize() {
             return true;
           }
         }, {
-          key: "postInitialRenderInitialize",
-          value: function postInitialRenderInitialize() {
+          key: "onAfterInitialize",
+          value: function onAfterInitialize() {
             return true;
           }
         }, {
           key: "initialize",
           value: function initialize() {
+            this.onBeforeInitialize();
+            // Potentially do something with the return values of these?
             this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
             this.internalInitialize();
             this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
+            this.onAfterInitialRender();
           }
+        }, {
+          key: "onBeforeInitialRender",
+          value: function onBeforeInitialRender() {}
         }, {
           key: "render",
           value: function render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
@@ -239,6 +256,11 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
             var tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
             return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+          }
+        }, {
+          key: "onAfterInitialRender",
+          value: function onAfterInitialRender() {
+            return true;
           }
         }, {
           key: "renderAsync",

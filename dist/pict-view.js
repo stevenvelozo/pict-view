@@ -98,7 +98,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
 
           // Pull back a few things
           this.log = this.fable.log;
-          this.servicesMap = this.fable.serviceMap;
+          this.servicesMap = this.fable.servicesMap;
           this.services = this.fable.services;
         }
       }

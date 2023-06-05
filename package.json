@@ -1,6 +1,6 @@
 {
     "name": "pict-view",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {
@@ -45,6 +45,6 @@
         ]
     },
     "dependencies": {
-        "fable-serviceproviderbase": "^3.0.7"
+        "fable-serviceproviderbase": "^3.0.10"
     }
 }

@@ -148,8 +148,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
           // Convenience and consistency naming
           _this.pict = _this.fable;
-
-          // Wire in the essential Pict service
+          // Wire in the essential Pict state
           _this.AppData = _this.fable.AppData;
 
           // Load all templates from the array in the options
@@ -200,7 +199,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           if (_this.options.RenderOnLoad) {
             _this.onBeforeInitialRender();
             _this.render(_this.options.DefaultRenderable, _this.options.DefaultDestinationAddress, _this.options.DefaultTemplateRecordAddress);
-            _this.onPostInitialRender();
+            _this.onAfterInitialRender();
           }
           return _this;
         }
@@ -233,7 +232,14 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           }
         }, {
           key: "onBeforeInitialRender",
-          value: function onBeforeInitialRender() {}
+          value: function onBeforeInitialRender() {
+            return true;
+          }
+        }, {
+          key: "onBeforeRender",
+          value: function onBeforeRender(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
+            return true;
+          }
         }, {
           key: "render",
           value: function render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
@@ -253,9 +259,16 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               return false;
             }
             var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+            this.onBeforeRender(pRenderable, tmpRenderDestinationAddress, tmpDataAddress);
             var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
             var tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
-            return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+            this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+            return this.onAfterRender(pRenderable, tmpRenderDestinationAddress, tmpDataAddress);
+          }
+        }, {
+          key: "onAfterRender",
+          value: function onAfterRender(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
+            return true;
           }
         }, {
           key: "onAfterInitialRender",

@@ -130,8 +130,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
 
           // Convenience and consistency naming
           this.pict = this.fable;
-
-          // Wire in the essential Pict service
+          // Wire in the essential Pict state
           this.AppData = this.fable.AppData;
 
           // Load all templates from the array in the options
@@ -182,7 +181,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           if (this.options.RenderOnLoad) {
             this.onBeforeInitialRender();
             this.render(this.options.DefaultRenderable, this.options.DefaultDestinationAddress, this.options.DefaultTemplateRecordAddress);
-            this.onPostInitialRender();
+            this.onAfterInitialRender();
           }
         }
         onBeforeInitialize() {
@@ -204,7 +203,12 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
           this.onAfterInitialRender();
         }
-        onBeforeInitialRender() {}
+        onBeforeInitialRender() {
+          return true;
+        }
+        onBeforeRender(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
+          return true;
+        }
         render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
           if (!tmpRenderableHash) {
@@ -222,9 +226,14 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             return false;
           }
           let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+          this.onBeforeRender(pRenderable, tmpRenderDestinationAddress, tmpDataAddress);
           let tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
           let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
-          return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+          this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+          return this.onAfterRender(pRenderable, tmpRenderDestinationAddress, tmpDataAddress);
+        }
+        onAfterRender(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
+          return true;
         }
         onAfterInitialRender() {
           return true;

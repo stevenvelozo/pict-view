@@ -101,7 +101,7 @@ class PictView extends libFableServiceBase
 		{
 			this.onBeforeInitialRender();
 			this.render(this.options.DefaultRenderable, this.options.DefaultDestinationAddress, this.options.DefaultTemplateRecordAddress);
-			this.onPostInitialRender();
+			this.onAfterInitialRender();
 		}
 	}
 
@@ -133,7 +133,12 @@ class PictView extends libFableServiceBase
 
 	onBeforeInitialRender()
 	{
+		return true;
+	}
 
+	onBeforeRender(pRenderable, pRenderDestinationAddress, pTemplateDataAddress)
+	{
+		return true;
 	}
 
 	render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress)
@@ -168,9 +173,18 @@ class PictView extends libFableServiceBase
 			(typeof (tmpRenderable.RecordAddress) === 'string') ? tmpRenderable.RecordAddress :
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
+		this.onBeforeRender(pRenderable, tmpRenderDestinationAddress, tmpDataAddress);
+
 		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 		let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
-		return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+		this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+
+		return this.onAfterRender(pRenderable, tmpRenderDestinationAddress, tmpDataAddress);
+	}
+
+	onAfterRender(pRenderable, pRenderDestinationAddress, pTemplateDataAddress)
+	{
+		return true;
 	}
 
 	onAfterInitialRender()

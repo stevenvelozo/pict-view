@@ -146,7 +146,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           var tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           _this = _super.call(this, pFable, tmpOptions, pServiceHash);
           if (!_this.options.ViewIdentifier) {
-            _this.options.ViewIdentifier = "ViewID-".concat(_this.fable.getUUID());
+            _this.options.ViewIdentifier = "AutoViewID-".concat(_this.fable.getUUID());
           }
           _this.serviceType = 'PictView';
           // Convenience and consistency naming

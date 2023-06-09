@@ -29,7 +29,7 @@ class PictView extends libFableServiceBase
 		super(pFable, tmpOptions, pServiceHash);
 		if (!this.options.ViewIdentifier)
 		{
-			this.options.ViewIdentifier = `ViewID-${this.fable.getUUID()}`;
+			this.options.ViewIdentifier = `AutoViewID-${this.fable.getUUID()}`;
 		}
 		this.serviceType = 'PictView';
 		// Convenience and consistency naming

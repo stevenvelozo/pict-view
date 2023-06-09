@@ -128,7 +128,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           let tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           super(pFable, tmpOptions, pServiceHash);
           if (!this.options.ViewIdentifier) {
-            this.options.ViewIdentifier = "ViewID-".concat(this.fable.getUUID());
+            this.options.ViewIdentifier = "AutoViewID-".concat(this.fable.getUUID());
           }
           this.serviceType = 'PictView';
           // Convenience and consistency naming

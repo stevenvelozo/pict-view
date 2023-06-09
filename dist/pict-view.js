@@ -179,6 +179,46 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             }
           }
         }
+        onBeforeSolve() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
+          return true;
+        }
+        onBeforeSolveAsync(fCallback) {
+          this.onBeforeSolve();
+          return fCallback();
+        }
+        onSolve() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
+          return true;
+        }
+        onSolveAsync(fCallback) {
+          this.onSolve();
+          return fCallback();
+        }
+
+        // TODO: do we need an asynchronous version of this?
+        solve() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+          return true;
+        }
+        solveAsync(fCallback) {
+          let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+          tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
+          tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
+          tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
+          tmpAnticipate.wait(pError => {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
+            return fCallback(pError);
+          });
+        }
+        onAfterSolve() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
+          return true;
+        }
+        onAfterSolveAsync(fCallback) {
+          this.onAfterSolve();
+          return fCallback();
+        }
         onBeforeInitialize() {
           this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
           return true;

@@ -199,6 +199,63 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           return _this;
         }
         _createClass(PictView, [{
+          key: "onBeforeSolve",
+          value: function onBeforeSolve() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
+            return true;
+          }
+        }, {
+          key: "onBeforeSolveAsync",
+          value: function onBeforeSolveAsync(fCallback) {
+            this.onBeforeSolve();
+            return fCallback();
+          }
+        }, {
+          key: "onSolve",
+          value: function onSolve() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
+            return true;
+          }
+        }, {
+          key: "onSolveAsync",
+          value: function onSolveAsync(fCallback) {
+            this.onSolve();
+            return fCallback();
+          }
+
+          // TODO: do we need an asynchronous version of this?
+        }, {
+          key: "solve",
+          value: function solve() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+            return true;
+          }
+        }, {
+          key: "solveAsync",
+          value: function solveAsync(fCallback) {
+            var _this2 = this;
+            var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+            tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
+            tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
+            tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
+            tmpAnticipate.wait(function (pError) {
+              _this2.log.info("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " solveAsync() complete."));
+              return fCallback(pError);
+            });
+          }
+        }, {
+          key: "onAfterSolve",
+          value: function onAfterSolve() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
+            return true;
+          }
+        }, {
+          key: "onAfterSolveAsync",
+          value: function onAfterSolveAsync(fCallback) {
+            this.onAfterSolve();
+            return fCallback();
+          }
+        }, {
           key: "onBeforeInitialize",
           value: function onBeforeInitialize() {
             this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
@@ -233,14 +290,14 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "initializeAsync",
           value: function initializeAsync(fCallBack) {
-            var _this2 = this;
+            var _this3 = this;
             var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
             this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
             tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
             tmpAnticipate.wait(function (pError) {
-              _this2.log.info("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " initialization complete."));
+              _this3.log.info("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " initialization complete."));
               return fCallBack();
             });
           }
@@ -305,7 +362,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "renderAsync",
           value: function renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
-            var _this3 = this;
+            var _this4 = this;
             var tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : false;
             if (!tmpRenderableHash) {
               this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, "because it is not a valid renderable."));
@@ -330,15 +387,15 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             // Render the template (asynchronously)
             this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, function (pError, pContent) {
               if (pError) {
-                _this3.log.error("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
+                _this4.log.error("PictView [".concat(_this4.UUID, "]::[").concat(_this4.Hash, "] ").concat(_this4.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
                 return fCallback(pError);
               }
 
               // Assign the content to the destination address
-              _this3.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+              _this4.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
 
               // Execute the developer-overridable post-render behavior
-              _this3.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
+              _this4.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
               return fCallback(null, pContent);
             });
           }

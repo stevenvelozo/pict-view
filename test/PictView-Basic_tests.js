@@ -45,7 +45,6 @@ const configureTestPict = (pPict) =>
 		tmpPict.log.info(`Mocking an assignment of Address: ${pAddress}`, {Content: pContent});
 		return '';
 	}
-
 	return tmpPict;
 }
 
@@ -64,7 +63,7 @@ suite
 				() =>
 				{
 					test(
-							'Generated test 9',
+							'Add a view that does nothing',
 							(fDone) =>
 							{
 								let _Pict = configureTestPict();

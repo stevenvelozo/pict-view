@@ -9,7 +9,7 @@ const defaultPictViewSettings = (
 		ViewIdentifier: 'DEFAULT',
 
 		InitializeOnLoad: true,
-		RenderOnLoad: false,
+		RenderOnLoad: true,
 
 		Templates: [],
 
@@ -24,13 +24,13 @@ class PictView extends libFableServiceBase
 {
 	constructor(pFable, pOptions, pServiceHash)
 	{
+		// Intersect default options, parent constructor, service information
 		let tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
 		super(pFable, tmpOptions, pServiceHash);
 		this.serviceType = 'PictView';
-
 		// Convenience and consistency naming
 		this.pict = this.fable;
-		// Wire in the essential Pict state
+		// Wire in the essential Pict application state
 		this.AppData = this.fable.AppData;
 
 		// Load all templates from the array in the options
@@ -92,37 +92,27 @@ class PictView extends libFableServiceBase
 				this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
 			}
 		}
-
-		if (this.options.InitializeOnLoad)
-		{
-			this.initialize();
-		}
-		if (this.options.RenderOnLoad)
-		{
-			this.onBeforeInitialRender();
-			this.render(this.options.DefaultRenderable, this.options.DefaultDestinationAddress, this.options.DefaultTemplateRecordAddress);
-			this.onPostInitialRender();
-		}
 	}
 
-	onBeforeInitialize()
+	onBeforeInitialize(fCallback)
 	{
 		return true;
 	}
 
 	// Used for controls and the like to initialize their state
-	internalInitialize()
+	initialize(fCallback)
 	{
 		return true;
 	}
 
-	onAfterInitialize()
+	onAfterInitialize(fCallback)
 	{
 		return true;
 	}
 
 	initialize()
 	{
+
 		this.onBeforeInitialize();
 		// Potentially do something with the return values of these?
 		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} beginning initialization...`);
@@ -131,9 +121,9 @@ class PictView extends libFableServiceBase
 		this.onAfterInitialRender();
 	}
 
-	onBeforeInitialRender()
+	onBeforeRender(pRenderable, pRenderDestinationAddress, pData)
 	{
-
+		// Overload this to mess with stuff before the content gets generated from the template
 	}
 
 	render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress)
@@ -169,13 +159,18 @@ class PictView extends libFableServiceBase
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
 		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
-		let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
-		return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
-	}
 
-	onAfterInitialRender()
-	{
-		return true;
+		// Execute the developer-overridable pre-render behavior
+		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+
+		// Generate the content output from the template and data
+		let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
+
+		// Assign the content to the destination address
+		this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+
+		// Execute the developer-overridable post-render behavior
+		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent)
 	}
 
 	renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
@@ -210,6 +205,12 @@ class PictView extends libFableServiceBase
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
 		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+
+
+		// Execute the developer-overridable pre-render behavior
+		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+
+		// Render the template (asynchronously)
 		this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData,
 			(pError, pContent) =>
 			{
@@ -218,9 +219,21 @@ class PictView extends libFableServiceBase
 					this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderable}) because it did not parse the template.`, pError);
 					return fCallback(pError);
 				}
+
+				// Assign the content to the destination address
 				this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+
+				// Execute the developer-overridable post-render behavior
+				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent)
+
 				return fCallback(null, pContent);
 			});
+	}
+
+
+	onAfterRender()
+	{
+		return true;
 	}
 }
 

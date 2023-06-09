@@ -130,7 +130,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         DefaultTemplateRecordAddress: false,
         ViewIdentifier: 'DEFAULT',
         InitializeOnLoad: true,
-        RenderOnLoad: false,
+        RenderOnLoad: true,
         Templates: [],
         DefaultTemplates: [],
         Renderables: [],
@@ -142,14 +142,13 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         function PictView(pFable, pOptions, pServiceHash) {
           var _this;
           _classCallCheck(this, PictView);
+          // Intersect default options, parent constructor, service information
           var tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           _this = _super.call(this, pFable, tmpOptions, pServiceHash);
           _this.serviceType = 'PictView';
-
           // Convenience and consistency naming
           _this.pict = _this.fable;
-
-          // Wire in the essential Pict service
+          // Wire in the essential Pict application state
           _this.AppData = _this.fable.AppData;
 
           // Load all templates from the array in the options
@@ -194,33 +193,15 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               _this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
             }
           }
-          if (_this.options.InitializeOnLoad) {
-            _this.initialize();
-          }
-          if (_this.options.RenderOnLoad) {
-            _this.onBeforeInitialRender();
-            _this.render(_this.options.DefaultRenderable, _this.options.DefaultDestinationAddress, _this.options.DefaultTemplateRecordAddress);
-            _this.onPostInitialRender();
-          }
           return _this;
         }
         _createClass(PictView, [{
           key: "onBeforeInitialize",
-          value: function onBeforeInitialize() {
+          value: function onBeforeInitialize(fCallback) {
             return true;
           }
 
           // Used for controls and the like to initialize their state
-        }, {
-          key: "internalInitialize",
-          value: function internalInitialize() {
-            return true;
-          }
-        }, {
-          key: "onAfterInitialize",
-          value: function onAfterInitialize() {
-            return true;
-          }
         }, {
           key: "initialize",
           value: function initialize() {
@@ -232,8 +213,15 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             this.onAfterInitialRender();
           }
         }, {
-          key: "onBeforeInitialRender",
-          value: function onBeforeInitialRender() {}
+          key: "onAfterInitialize",
+          value: function onAfterInitialize(fCallback) {
+            return true;
+          }
+        }, {
+          key: "onBeforeRender",
+          value: function onBeforeRender(pRenderable, pRenderDestinationAddress, pData) {
+            // Overload this to mess with stuff before the content gets generated from the template
+          }
         }, {
           key: "render",
           value: function render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
@@ -254,13 +242,18 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             }
             var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
             var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+
+            // Execute the developer-overridable pre-render behavior
+            this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+
+            // Generate the content output from the template and data
             var tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
-            return this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
-          }
-        }, {
-          key: "onAfterInitialRender",
-          value: function onAfterInitialRender() {
-            return true;
+
+            // Assign the content to the destination address
+            this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+
+            // Execute the developer-overridable post-render behavior
+            this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent);
           }
         }, {
           key: "renderAsync",
@@ -283,14 +276,29 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             }
             var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
             var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+
+            // Execute the developer-overridable pre-render behavior
+            this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+
+            // Render the template (asynchronously)
             this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, function (pError, pContent) {
               if (pError) {
                 _this2.log.error("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
                 return fCallback(pError);
               }
+
+              // Assign the content to the destination address
               _this2.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+
+              // Execute the developer-overridable post-render behavior
+              _this2.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
               return fCallback(null, pContent);
             });
+          }
+        }, {
+          key: "onAfterRender",
+          value: function onAfterRender() {
+            return true;
           }
         }]);
         return PictView;

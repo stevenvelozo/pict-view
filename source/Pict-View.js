@@ -146,7 +146,6 @@ class PictView extends libFableServiceBase
 			})
 	}
 
-
 	onAfterInitialize()
 	{
 		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterInitialize:`);

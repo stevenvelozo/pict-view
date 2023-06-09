@@ -212,7 +212,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         _createClass(PictView, [{
           key: "onBeforeSolve",
           value: function onBeforeSolve() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
+            }
             return true;
           }
         }, {
@@ -224,7 +226,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "onSolve",
           value: function onSolve() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
+            }
             return true;
           }
         }, {
@@ -238,7 +242,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "solve",
           value: function solve() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+            if (this.pict.LogNoisiness > 2) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+            }
             this.onBeforeSolve();
             this.onSolve();
             this.onAfterSolve();
@@ -254,7 +260,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
             tmpAnticipate.wait(function (pError) {
-              _this2.log.info("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " solveAsync() complete."));
+              if (_this2.pict.LogNoisiness > 2) {
+                _this2.log.trace("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " solveAsync() complete."));
+              }
               _this2.lastSolvedTimestamp = _this2.fable.log.getTimeStamp();
               return fCallback(pError);
             });
@@ -262,7 +270,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "onAfterSolve",
           value: function onAfterSolve() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
+            }
             return true;
           }
         }, {
@@ -274,7 +284,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "onBeforeInitialize",
           value: function onBeforeInitialize() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
+            }
             return true;
           }
         }, {
@@ -286,7 +298,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "onInitialize",
           value: function onInitialize() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onInitialize:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onInitialize:"));
+            }
             return true;
           }
         }, {
@@ -325,7 +339,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
                 return fCallback();
               });
             } else {
-              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize called but initialization is already completed.  Aborting."));
+              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " async initialize called but initialization is already completed.  Aborting."));
               // TODO: Should this be an error?
               return fCallback();
             }
@@ -333,7 +347,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "onAfterInitialize",
           value: function onAfterInitialize() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterInitialize:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterInitialize:"));
+            }
             return true;
           }
         }, {
@@ -346,7 +362,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           key: "onBeforeRender",
           value: function onBeforeRender(pRenderable, pRenderDestinationAddress, pData) {
             // Overload this to mess with stuff before the content gets generated from the template
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeRender:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeRender:"));
+            }
             return true;
           }
         }, {
@@ -433,7 +451,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "onAfterRender",
           value: function onAfterRender() {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterRender:"));
+            if (this.pict.LogNoisiness > 3) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterRender:"));
+            }
             return true;
           }
         }, {

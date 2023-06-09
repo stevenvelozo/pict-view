@@ -191,7 +191,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           }
         }
         onBeforeSolve() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
+          }
           return true;
         }
         onBeforeSolveAsync(fCallback) {
@@ -199,7 +201,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           return fCallback();
         }
         onSolve() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
+          }
           return true;
         }
         onSolveAsync(fCallback) {
@@ -209,7 +213,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
 
         // TODO: do we need an asynchronous version of this?
         solve() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+          if (this.pict.LogNoisiness > 2) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+          }
           this.onBeforeSolve();
           this.onSolve();
           this.onAfterSolve();
@@ -222,13 +228,17 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
           tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
           tmpAnticipate.wait(pError => {
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
+            if (this.pict.LogNoisiness > 2) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
+            }
             this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
             return fCallback(pError);
           });
         }
         onAfterSolve() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
+          }
           return true;
         }
         onAfterSolveAsync(fCallback) {
@@ -236,7 +246,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           return fCallback();
         }
         onBeforeInitialize() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
+          }
           return true;
         }
         onBeforeInitializeAsync(fCallback) {
@@ -244,7 +256,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           return fCallback();
         }
         onInitialize() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onInitialize:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onInitialize:"));
+          }
           return true;
         }
         onInitializeAsync(fCallback) {
@@ -276,13 +290,15 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
               return fCallback();
             });
           } else {
-            this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize called but initialization is already completed.  Aborting."));
+            this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " async initialize called but initialization is already completed.  Aborting."));
             // TODO: Should this be an error?
             return fCallback();
           }
         }
         onAfterInitialize() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterInitialize:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterInitialize:"));
+          }
           return true;
         }
         onAfterInitializeAsync(fCallback) {
@@ -291,7 +307,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
         }
         onBeforeRender(pRenderable, pRenderDestinationAddress, pData) {
           // Overload this to mess with stuff before the content gets generated from the template
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeRender:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeRender:"));
+          }
           return true;
         }
         onBeforeRenderAsync(pRenderable, pRenderDestinationAddress, pData, fCallback) {
@@ -369,7 +387,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           });
         }
         onAfterRender() {
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterRender:"));
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterRender:"));
+          }
           return true;
         }
         onAfterRenderAsync(fCallback) {

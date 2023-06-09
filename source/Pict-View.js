@@ -114,7 +114,10 @@ class PictView extends libFableServiceBase
 
     onBeforeSolve()
     {
-        this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeSolve:`);
+    	if (this.pict.LogNoisiness > 3)
+    	{
+	        this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeSolve:`);    		
+    	}
         return true;
     }
     onBeforeSolveAsync(fCallback)
@@ -125,7 +128,10 @@ class PictView extends libFableServiceBase
 
     onSolve()
     {
-        this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onSolve:`);
+        if (this.pict.LogNoisiness > 3)
+        {
+        	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onSolve:`);
+        }
         return true;
     }
     onSolveAsync(fCallback)
@@ -137,7 +143,10 @@ class PictView extends libFableServiceBase
     // TODO: do we need an asynchronous version of this?
     solve()
     {
-        this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} executing solve() function...`);
+        if (this.pict.LogNoisiness > 2)
+        {
+        	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} executing solve() function...`);
+        }
         this.onBeforeSolve();
         this.onSolve();
         this.onAfterSolve();
@@ -156,7 +165,10 @@ class PictView extends libFableServiceBase
         tmpAnticipate.wait(
             (pError) =>
             {
-                this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
+                if (this.pict.LogNoisiness > 2)
+                {
+                	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
+                }
                 this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
                 return fCallback(pError);
             });
@@ -164,7 +176,10 @@ class PictView extends libFableServiceBase
 
     onAfterSolve()
     {
-        this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterSolve:`);
+        if (this.pict.LogNoisiness > 3)
+        {
+        	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterSolve:`);
+        }
         return true;
     }
     onAfterSolveAsync(fCallback)
@@ -175,7 +190,10 @@ class PictView extends libFableServiceBase
 
 	onBeforeInitialize()
 	{
-		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeInitialize:`);
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeInitialize:`);
+		}
 		return true;
 	}
 	onBeforeInitializeAsync(fCallback)
@@ -187,7 +205,10 @@ class PictView extends libFableServiceBase
 	onInitialize()
 	{
 
-		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onInitialize:`);
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onInitialize:`);
+		}
 		return true;
 	}
 	onInitializeAsync(fCallback)
@@ -234,7 +255,7 @@ class PictView extends libFableServiceBase
 		}
 		else
 		{
-			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialize called but initialization is already completed.  Aborting.`);
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} async initialize called but initialization is already completed.  Aborting.`);
 			// TODO: Should this be an error?
 			return fCallback();
 		}
@@ -242,7 +263,10 @@ class PictView extends libFableServiceBase
 
 	onAfterInitialize()
 	{
-		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterInitialize:`);
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterInitialize:`);
+		}
 		return true;
 	}
 	onAfterInitializeAsync(fCallback)
@@ -254,7 +278,10 @@ class PictView extends libFableServiceBase
 	onBeforeRender(pRenderable, pRenderDestinationAddress, pData)
 	{
 		// Overload this to mess with stuff before the content gets generated from the template
-		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeRender:`);
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeRender:`);
+		}
 		return true;
 	}
 	onBeforeRenderAsync(pRenderable, pRenderDestinationAddress, pData, fCallback)
@@ -372,7 +399,10 @@ class PictView extends libFableServiceBase
 
 	onAfterRender()
 	{
-		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterRender:`);
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterRender:`);
+		}
 		return true;
 	}
 	onAfterRenderAsync(fCallback)

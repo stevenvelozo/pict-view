@@ -6,7 +6,7 @@ const defaultPictViewSettings = (
 		DefaultDestinationAddress: false,
 		DefaultTemplateRecordAddress: false,
 
-		ViewIdentifier: 'DEFAULT',
+		ViewIdentifier: false,
 
 		InitializeOnLoad: true,
 		RenderOnLoad: true,
@@ -27,6 +27,10 @@ class PictView extends libFableServiceBase
 		// Intersect default options, parent constructor, service information
 		let tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
 		super(pFable, tmpOptions, pServiceHash);
+		if (!this.options.ViewIdentifier)
+		{
+			this.options.ViewIdentifier = `ViewID-${this.fable.getUUID()}`;
+		}
 		this.serviceType = 'PictView';
 		// Convenience and consistency naming
 		this.pict = this.fable;
@@ -94,36 +98,74 @@ class PictView extends libFableServiceBase
 		}
 	}
 
-	onBeforeInitialize(fCallback)
+	onBeforeInitialize()
 	{
+		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeInitialize:`);
 		return true;
 	}
-
-	// Used for controls and the like to initialize their state
-	initialize(fCallback)
+	onBeforeInitializeAsync(fCallback)
 	{
-		return true;
+		this.onBeforeInitialize();
+		return fCallback();
 	}
 
-	onAfterInitialize(fCallback)
+	onInitialize()
 	{
+
+		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onInitialize:`);
 		return true;
+	}
+	onInitializeAsync(fCallback)
+	{
+		this.onInitialize();
+		return fCallback();
 	}
 
 	initialize()
 	{
+		this.onInitialize();
+		return true;
+	}
+	initializeAsync(fCallBack)
+	{
+		let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
 
-		this.onBeforeInitialize();
-		// Potentially do something with the return values of these?
 		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} beginning initialization...`);
-		this.internalInitialize();
-		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
-		this.onAfterInitialRender();
+
+		tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
+		tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
+		tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
+
+		tmpAnticipate.wait(
+			(pError) =>
+			{
+				this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
+				return fCallBack();
+			})
+	}
+
+
+	onAfterInitialize()
+	{
+		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterInitialize:`);
+		return true;
+	}
+	onAfterInitializeAsync(fCallback)
+	{
+		this.onAfterInitialize();
+		return fCallback();
 	}
 
 	onBeforeRender(pRenderable, pRenderDestinationAddress, pData)
 	{
 		// Overload this to mess with stuff before the content gets generated from the template
+		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeRender:`);
+		return true;
+	}
+	onBeforeRenderAsync(pRenderable, pRenderDestinationAddress, pData, fCallback)
+	{
+		this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
+		return fCallback();
 	}
 
 	render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress)
@@ -172,7 +214,6 @@ class PictView extends libFableServiceBase
 		// Execute the developer-overridable post-render behavior
 		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent)
 	}
-
 	renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
 	{
 		let tmpRenderableHash = (typeof (pRenderable) === 'string') ? pRenderable : false;
@@ -230,10 +271,15 @@ class PictView extends libFableServiceBase
 			});
 	}
 
-
 	onAfterRender()
 	{
+		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterRender:`);
 		return true;
+	}
+	onAfterRenderAsync(fCallback)
+	{
+		this.onAfterRender();
+		return fCallback();
 	}
 }
 

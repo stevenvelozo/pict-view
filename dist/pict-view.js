@@ -114,7 +114,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
         DefaultRenderable: false,
         DefaultDestinationAddress: false,
         DefaultTemplateRecordAddress: false,
-        ViewIdentifier: 'DEFAULT',
+        ViewIdentifier: false,
         InitializeOnLoad: true,
         RenderOnLoad: true,
         Templates: [],
@@ -127,6 +127,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           // Intersect default options, parent constructor, service information
           let tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           super(pFable, tmpOptions, pServiceHash);
+          if (!this.options.ViewIdentifier) {
+            this.options.ViewIdentifier = "ViewID-".concat(this.fable.getUUID());
+          }
           this.serviceType = 'PictView';
           // Convenience and consistency naming
           this.pict = this.fable;
@@ -176,27 +179,53 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             }
           }
         }
-        onBeforeInitialize(fCallback) {
+        onBeforeInitialize() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
           return true;
         }
-
-        // Used for controls and the like to initialize their state
-        initialize(fCallback) {
+        onBeforeInitializeAsync(fCallback) {
+          this.onBeforeInitialize();
+          return fCallback();
+        }
+        onInitialize() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onInitialize:"));
           return true;
         }
-        onAfterInitialize(fCallback) {
-          return true;
+        onInitializeAsync(fCallback) {
+          this.onInitialize();
+          return fCallback();
         }
         initialize() {
-          this.onBeforeInitialize();
-          // Potentially do something with the return values of these?
+          this.onInitialize();
+          return true;
+        }
+        initializeAsync(fCallBack) {
+          let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
           this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
-          this.internalInitialize();
-          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
-          this.onAfterInitialRender();
+          tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
+          tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
+          tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
+          tmpAnticipate.wait(pError => {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
+            return fCallBack();
+          });
+        }
+        onAfterInitialize() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterInitialize:"));
+          return true;
+        }
+        onAfterInitializeAsync(fCallback) {
+          this.onAfterInitialize();
+          return fCallback();
         }
         onBeforeRender(pRenderable, pRenderDestinationAddress, pData) {
           // Overload this to mess with stuff before the content gets generated from the template
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeRender:"));
+          return true;
+        }
+        onBeforeRenderAsync(pRenderable, pRenderDestinationAddress, pData, fCallback) {
+          this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
+          return fCallback();
         }
         render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
@@ -267,7 +296,12 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           });
         }
         onAfterRender() {
+          this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterRender:"));
           return true;
+        }
+        onAfterRenderAsync(fCallback) {
+          this.onAfterRender();
+          return fCallback();
         }
       }
       module.exports = PictView;

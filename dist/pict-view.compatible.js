@@ -128,7 +128,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         DefaultRenderable: false,
         DefaultDestinationAddress: false,
         DefaultTemplateRecordAddress: false,
-        ViewIdentifier: 'DEFAULT',
+        ViewIdentifier: false,
         InitializeOnLoad: true,
         RenderOnLoad: true,
         Templates: [],
@@ -145,6 +145,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           // Intersect default options, parent constructor, service information
           var tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           _this = _super.call(this, pFable, tmpOptions, pServiceHash);
+          if (!_this.options.ViewIdentifier) {
+            _this.options.ViewIdentifier = "ViewID-".concat(_this.fable.getUUID());
+          }
           _this.serviceType = 'PictView';
           // Convenience and consistency naming
           _this.pict = _this.fable;
@@ -197,30 +200,72 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }
         _createClass(PictView, [{
           key: "onBeforeInitialize",
-          value: function onBeforeInitialize(fCallback) {
+          value: function onBeforeInitialize() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
             return true;
           }
-
-          // Used for controls and the like to initialize their state
+        }, {
+          key: "onBeforeInitializeAsync",
+          value: function onBeforeInitializeAsync(fCallback) {
+            this.onBeforeInitialize();
+            return fCallback();
+          }
+        }, {
+          key: "onInitialize",
+          value: function onInitialize() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onInitialize:"));
+            return true;
+          }
+        }, {
+          key: "onInitializeAsync",
+          value: function onInitializeAsync(fCallback) {
+            this.onInitialize();
+            return fCallback();
+          }
         }, {
           key: "initialize",
           value: function initialize() {
-            this.onBeforeInitialize();
-            // Potentially do something with the return values of these?
+            this.onInitialize();
+            return true;
+          }
+        }, {
+          key: "initializeAsync",
+          value: function initializeAsync(fCallBack) {
+            var _this2 = this;
+            var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
             this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
-            this.internalInitialize();
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
-            this.onAfterInitialRender();
+            tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
+            tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
+            tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
+            tmpAnticipate.wait(function (pError) {
+              _this2.log.info("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " initialization complete."));
+              return fCallBack();
+            });
           }
         }, {
           key: "onAfterInitialize",
-          value: function onAfterInitialize(fCallback) {
+          value: function onAfterInitialize() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterInitialize:"));
             return true;
+          }
+        }, {
+          key: "onAfterInitializeAsync",
+          value: function onAfterInitializeAsync(fCallback) {
+            this.onAfterInitialize();
+            return fCallback();
           }
         }, {
           key: "onBeforeRender",
           value: function onBeforeRender(pRenderable, pRenderDestinationAddress, pData) {
             // Overload this to mess with stuff before the content gets generated from the template
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeRender:"));
+            return true;
+          }
+        }, {
+          key: "onBeforeRenderAsync",
+          value: function onBeforeRenderAsync(pRenderable, pRenderDestinationAddress, pData, fCallback) {
+            this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
+            return fCallback();
           }
         }, {
           key: "render",
@@ -258,7 +303,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "renderAsync",
           value: function renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
-            var _this2 = this;
+            var _this3 = this;
             var tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : false;
             if (!tmpRenderableHash) {
               this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, "because it is not a valid renderable."));
@@ -283,22 +328,29 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             // Render the template (asynchronously)
             this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, function (pError, pContent) {
               if (pError) {
-                _this2.log.error("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
+                _this3.log.error("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
                 return fCallback(pError);
               }
 
               // Assign the content to the destination address
-              _this2.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+              _this3.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
 
               // Execute the developer-overridable post-render behavior
-              _this2.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
+              _this3.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
               return fCallback(null, pContent);
             });
           }
         }, {
           key: "onAfterRender",
           value: function onAfterRender() {
+            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterRender:"));
             return true;
+          }
+        }, {
+          key: "onAfterRenderAsync",
+          value: function onAfterRenderAsync(fCallback) {
+            this.onAfterRender();
+            return fCallback();
           }
         }]);
         return PictView;

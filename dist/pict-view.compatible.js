@@ -225,7 +225,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "initialize",
           value: function initialize() {
+            this.onBeforeInitialize();
             this.onInitialize();
+            this.onAfterInitialize();
             return true;
           }
         }, {

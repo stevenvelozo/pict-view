@@ -196,7 +196,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           return fCallback();
         }
         initialize() {
+          this.onBeforeInitialize();
           this.onInitialize();
+          this.onAfterInitialize();
           return true;
         }
         initializeAsync(fCallBack) {

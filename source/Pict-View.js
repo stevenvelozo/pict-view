@@ -123,7 +123,9 @@ class PictView extends libFableServiceBase
 
 	initialize()
 	{
+		this.onBeforeInitialize();
 		this.onInitialize();
+		this.onAfterInitialize();
 		return true;
 	}
 	initializeAsync(fCallBack)

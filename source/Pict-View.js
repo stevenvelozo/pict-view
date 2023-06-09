@@ -8,8 +8,13 @@ const defaultPictViewSettings = (
 
 		ViewIdentifier: false,
 
-		InitializeOnLoad: true,
-		RenderOnLoad: true,
+		AutoInitialize: true,
+		AutoInitializeOrdinal: 0,
+		AutoRender: true,
+		AutoRenderOrdinal: 0,
+
+		SolveWithAppSolve: true,
+		SolveOrdinal: 0,
 
 		Templates: [],
 

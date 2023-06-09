@@ -8,13 +8,18 @@ const defaultPictViewSettings = (
 
 		ViewIdentifier: false,
 
+		// If this is set to true, when the App initializes this will.
+		// After the App initializes, initialize will be called as soon as it's added.
 		AutoInitialize: true,
 		AutoInitializeOrdinal: 0,
+
+		// If this is set to true, when the App autorenders (on load) this will.
+		// After the App initializes, render will be called as soon as it's added.
 		AutoRender: true,
 		AutoRenderOrdinal: 0,
 
-		SolveWithAppSolve: true,
-		SolveOrdinal: 0,
+		AutoSolveWithApp: true,
+		AutoSolveOrdinal: 0,
 
 		Templates: [],
 
@@ -41,6 +46,10 @@ class PictView extends libFableServiceBase
 		this.pict = this.fable;
 		// Wire in the essential Pict application state
 		this.AppData = this.fable.AppData;
+
+		this.initializeTimestamp = false;
+		this.lastSolvedTimestamp = false;
+		this.lastRenderedTimestamp = false;
 
 		// Load all templates from the array in the options
 		// Templates are in the form of {Hash:'Some-Template-Hash',Template:'Template content',Source:'TemplateSource'}
@@ -128,7 +137,11 @@ class PictView extends libFableServiceBase
     // TODO: do we need an asynchronous version of this?
     solve()
     {
-        this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} executing solve() function...`)
+        this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} executing solve() function...`);
+        this.onBeforeSolve();
+        this.onSolve();
+        this.onAfterSolve();
+        this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
         return true;
     }
 
@@ -144,6 +157,7 @@ class PictView extends libFableServiceBase
             (pError) =>
             {
                 this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
+                this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
                 return fCallback(pError);
             });
     }
@@ -184,27 +198,46 @@ class PictView extends libFableServiceBase
 
 	initialize()
 	{
-		this.onBeforeInitialize();
-		this.onInitialize();
-		this.onAfterInitialize();
-		return true;
+		if (!this.initializeTimestamp)
+		{
+			this.onBeforeInitialize();
+			this.onInitialize();
+			this.onAfterInitialize();
+			this.initializeTimestamp = this.fable.log.getTimeStamp();
+			return true;
+		}
+		else
+		{
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialize called but initialization is already completed.  Aborting.`);
+			return false;
+		}
 	}
-	initializeAsync(fCallBack)
+	initializeAsync(fCallback)
 	{
-		let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+		if (!this.initializeTimestamp)
+		{
+			let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
 
-		this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} beginning initialization...`);
+			this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} beginning initialization...`);
 
-		tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
-		tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
-		tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
+			tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
+			tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
+			tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
 
-		tmpAnticipate.wait(
-			(pError) =>
-			{
-				this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
-				return fCallBack();
-			})
+			tmpAnticipate.wait(
+				(pError) =>
+				{
+					this.initializeTimestamp = this.fable.log.getTimeStamp();
+					this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
+					return fCallback();
+				})
+		}
+		else
+		{
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialize called but initialization is already completed.  Aborting.`);
+			// TODO: Should this be an error?
+			return fCallback();
+		}
 	}
 
 	onAfterInitialize()
@@ -275,6 +308,8 @@ class PictView extends libFableServiceBase
 
 		// Execute the developer-overridable post-render behavior
 		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent)
+
+		this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
 	}
 	renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
 	{
@@ -328,6 +363,8 @@ class PictView extends libFableServiceBase
 
 				// Execute the developer-overridable post-render behavior
 				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent)
+
+				this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
 
 				return fCallback(null, pContent);
 			});

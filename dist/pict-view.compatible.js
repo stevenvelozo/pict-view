@@ -129,12 +129,16 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         DefaultDestinationAddress: false,
         DefaultTemplateRecordAddress: false,
         ViewIdentifier: false,
+        // If this is set to true, when the App initializes this will.
+        // After the App initializes, initialize will be called as soon as it's added.
         AutoInitialize: true,
         AutoInitializeOrdinal: 0,
+        // If this is set to true, when the App autorenders (on load) this will.
+        // After the App initializes, render will be called as soon as it's added.
         AutoRender: true,
         AutoRenderOrdinal: 0,
-        SolveWithAppSolve: true,
-        SolveOrdinal: 0,
+        AutoSolveWithApp: true,
+        AutoSolveOrdinal: 0,
         Templates: [],
         DefaultTemplates: [],
         Renderables: [],
@@ -157,6 +161,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           _this.pict = _this.fable;
           // Wire in the essential Pict application state
           _this.AppData = _this.fable.AppData;
+          _this.initializeTimestamp = false;
+          _this.lastSolvedTimestamp = false;
+          _this.lastRenderedTimestamp = false;
 
           // Load all templates from the array in the options
           // Templates are in the form of {Hash:'Some-Template-Hash',Template:'Template content',Source:'TemplateSource'}
@@ -232,6 +239,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           key: "solve",
           value: function solve() {
             this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+            this.onBeforeSolve();
+            this.onSolve();
+            this.onAfterSolve();
+            this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
             return true;
           }
         }, {
@@ -244,6 +255,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
             tmpAnticipate.wait(function (pError) {
               _this2.log.info("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " solveAsync() complete."));
+              _this2.lastSolvedTimestamp = _this2.fable.log.getTimeStamp();
               return fCallback(pError);
             });
           }
@@ -286,24 +298,37 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }, {
           key: "initialize",
           value: function initialize() {
-            this.onBeforeInitialize();
-            this.onInitialize();
-            this.onAfterInitialize();
-            return true;
+            if (!this.initializeTimestamp) {
+              this.onBeforeInitialize();
+              this.onInitialize();
+              this.onAfterInitialize();
+              this.initializeTimestamp = this.fable.log.getTimeStamp();
+              return true;
+            } else {
+              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize called but initialization is already completed.  Aborting."));
+              return false;
+            }
           }
         }, {
           key: "initializeAsync",
-          value: function initializeAsync(fCallBack) {
+          value: function initializeAsync(fCallback) {
             var _this3 = this;
-            var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
-            tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
-            tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
-            tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
-            tmpAnticipate.wait(function (pError) {
-              _this3.log.info("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " initialization complete."));
-              return fCallBack();
-            });
+            if (!this.initializeTimestamp) {
+              var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+              this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
+              tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
+              tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
+              tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
+              tmpAnticipate.wait(function (pError) {
+                _this3.initializeTimestamp = _this3.fable.log.getTimeStamp();
+                _this3.log.info("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " initialization complete."));
+                return fCallback();
+              });
+            } else {
+              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize called but initialization is already completed.  Aborting."));
+              // TODO: Should this be an error?
+              return fCallback();
+            }
           }
         }, {
           key: "onAfterInitialize",
@@ -362,6 +387,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
             // Execute the developer-overridable post-render behavior
             this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent);
+            this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
           }
         }, {
           key: "renderAsync",
@@ -400,6 +426,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
               // Execute the developer-overridable post-render behavior
               _this4.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
+              _this4.lastRenderedTimestamp = _this4.fable.log.getTimeStamp();
               return fCallback(null, pContent);
             });
           }

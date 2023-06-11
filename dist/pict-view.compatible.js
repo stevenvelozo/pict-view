@@ -201,15 +201,36 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           _this.renderables = {};
           for (var _i2 = 0; _i2 < _this.options.Renderables.length; _i2++) {
             var tmpRenderable = _this.options.Renderables[_i2];
-            if (!tmpRenderable.hasOwnProperty('RenderableHash') || !tmpRenderable.hasOwnProperty('TemplateHash')) {
-              _this.log.error("PictView [".concat(_this.UUID, "]::[").concat(_this.Hash, "] ").concat(_this.options.ViewIdentifier, " could not load Renderable ").concat(_i2, " in the options array."), tmpRenderable);
-            } else {
-              _this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
-            }
+            _this.addRenderable(_this.options.Renderables[_i2]);
           }
           return _this;
         }
         _createClass(PictView, [{
+          key: "addRenderable",
+          value: function addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress) {
+            var tmpRenderable = false;
+            if (_typeof(pRenderableHash) == 'object') {
+              // The developer passed in the renderable as an object.
+              // Use theirs instead!
+              tmpRenderable = pRenderableHash;
+            } else {
+              tmpRenderable = {
+                RenderableHash: pRenderableHash,
+                TemplateHash: pTemplateHash,
+                DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
+                DefaultDestinationAddress: pDefaultDestinationAddress
+              };
+            }
+            if (typeof tmpRenderable.RenderableHash != 'string' || typeof tmpRenderable.TemplateHash != 'string') {
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not load Renderable; RenderableHash or TemplateHash are invalid."), tmpRenderable);
+            } else {
+              if (this.pict.LogNoisiness > 0) {
+                this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " adding renderable [").concat(tmpRenderable.RenderableHash, "] pointed to template ").concat(tmpRenderable.TemplateHash, "."));
+              }
+              this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
+            }
+          }
+        }, {
           key: "onBeforeSolve",
           value: function onBeforeSolve() {
             if (this.pict.LogNoisiness > 3) {
@@ -237,8 +258,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             this.onSolve();
             return fCallback();
           }
-
-          // TODO: do we need an asynchronous version of this?
         }, {
           key: "solve",
           value: function solve() {
@@ -329,13 +348,17 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             var _this3 = this;
             if (!this.initializeTimestamp) {
               var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
-              this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
+              if (this.pict.LogNoisiness > 0) {
+                this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
+              }
               tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
               tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
               tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
               tmpAnticipate.wait(function (pError) {
                 _this3.initializeTimestamp = _this3.fable.log.getTimeStamp();
-                _this3.log.info("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " initialization complete."));
+                if (_this3.pict.LogNoisiness > 0) {
+                  _this3.log.info("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " initialization complete."));
+                }
                 return fCallback();
               });
             } else {
@@ -391,7 +414,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
               return false;
             }
-            var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+            var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
             var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
             // Execute the developer-overridable pre-render behavior
@@ -426,7 +449,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
               return fCallback(Error("Could not render ".concat(tmpRenderableHash)));
             }
-            var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+            var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
             var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
             // Execute the developer-overridable pre-render behavior

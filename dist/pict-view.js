@@ -183,11 +183,30 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           this.renderables = {};
           for (let i = 0; i < this.options.Renderables.length; i++) {
             let tmpRenderable = this.options.Renderables[i];
-            if (!tmpRenderable.hasOwnProperty('RenderableHash') || !tmpRenderable.hasOwnProperty('TemplateHash')) {
-              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not load Renderable ").concat(i, " in the options array."), tmpRenderable);
-            } else {
-              this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
+            this.addRenderable(this.options.Renderables[i]);
+          }
+        }
+        addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress) {
+          let tmpRenderable = false;
+          if (typeof pRenderableHash == 'object') {
+            // The developer passed in the renderable as an object.
+            // Use theirs instead!
+            tmpRenderable = pRenderableHash;
+          } else {
+            tmpRenderable = {
+              RenderableHash: pRenderableHash,
+              TemplateHash: pTemplateHash,
+              DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
+              DefaultDestinationAddress: pDefaultDestinationAddress
+            };
+          }
+          if (typeof tmpRenderable.RenderableHash != 'string' || typeof tmpRenderable.TemplateHash != 'string') {
+            this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not load Renderable; RenderableHash or TemplateHash are invalid."), tmpRenderable);
+          } else {
+            if (this.pict.LogNoisiness > 0) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " adding renderable [").concat(tmpRenderable.RenderableHash, "] pointed to template ").concat(tmpRenderable.TemplateHash, "."));
             }
+            this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
           }
         }
         onBeforeSolve() {
@@ -210,8 +229,6 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           this.onSolve();
           return fCallback();
         }
-
-        // TODO: do we need an asynchronous version of this?
         solve() {
           if (this.pict.LogNoisiness > 2) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
@@ -280,13 +297,17 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
         initializeAsync(fCallback) {
           if (!this.initializeTimestamp) {
             let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
-            this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
+            if (this.pict.LogNoisiness > 0) {
+              this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
+            }
             tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
             tmpAnticipate.wait(pError => {
               this.initializeTimestamp = this.fable.log.getTimeStamp();
-              this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
+              if (this.pict.LogNoisiness > 0) {
+                this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
+              }
               return fCallback();
             });
           } else {
@@ -332,7 +353,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
             return false;
           }
-          let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+          let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
           let tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
           // Execute the developer-overridable pre-render behavior
@@ -364,7 +385,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
             return fCallback(Error("Could not render ".concat(tmpRenderableHash)));
           }
-          let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.RecordAddress === 'string' ? tmpRenderable.RecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+          let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
           let tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
           // Execute the developer-overridable pre-render behavior

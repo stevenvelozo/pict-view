@@ -31,7 +31,7 @@ suite
 							{
 								let _Pict = new libPict();
 								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
-								let _PictView = _Pict.addView({}, 'Pict-View-TestGrid',  libPictView);
+								let _PictView = _Pict.addView('Pict-View-Test', {}, libPictView);
 								Expect(_PictView).to.be.an('object');
 								return fDone();
 							}

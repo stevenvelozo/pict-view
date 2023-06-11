@@ -100,15 +100,43 @@ class PictView extends libFableServiceBase
 		for (let i = 0; i < this.options.Renderables.length; i++)
 		{
 			let tmpRenderable = this.options.Renderables[i];
+			this.addRenderable(this.options.Renderables[i]);
+		}
+	}
 
-			if (!tmpRenderable.hasOwnProperty('RenderableHash') || !tmpRenderable.hasOwnProperty('TemplateHash'))
+	addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress)
+	{
+		let tmpRenderable = false;
+
+		if (typeof(pRenderableHash) == 'object')
+		{
+			// The developer passed in the renderable as an object.
+			// Use theirs instead!
+			tmpRenderable = pRenderableHash;
+		}
+		else
+		{
+			tmpRenderable = (
+				{
+					RenderableHash: pRenderableHash,
+					TemplateHash: pTemplateHash,
+					DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
+					DefaultDestinationAddress: pDefaultDestinationAddress
+				});
+		}
+
+		if ((typeof(tmpRenderable.RenderableHash) != 'string') || (typeof(tmpRenderable.TemplateHash) != 'string'))
+		{
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not load Renderable; RenderableHash or TemplateHash are invalid.`, tmpRenderable);
+		}
+		else
+		{
+			if (this.pict.LogNoisiness > 0)
 			{
-				this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not load Renderable ${i} in the options array.`, tmpRenderable);
+				this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} adding renderable [${tmpRenderable.RenderableHash}] pointed to template ${tmpRenderable.TemplateHash}.`);
 			}
-			else
-			{
-				this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
-			}
+
+			this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
 		}
 	}
 
@@ -238,7 +266,10 @@ class PictView extends libFableServiceBase
 		{
 			let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
 
-			this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} beginning initialization...`);
+			if (this.pict.LogNoisiness > 0)
+			{
+				this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} beginning initialization...`);
+			}
 
 			tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
 			tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
@@ -248,7 +279,10 @@ class PictView extends libFableServiceBase
 				(pError) =>
 				{
 					this.initializeTimestamp = this.fable.log.getTimeStamp();
-					this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
+					if (this.pict.LogNoisiness > 0)
+					{
+						this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
+					}
 					return fCallback();
 				})
 		}
@@ -318,7 +352,7 @@ class PictView extends libFableServiceBase
 		}
 
 		let tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
-			(typeof (tmpRenderable.RecordAddress) === 'string') ? tmpRenderable.RecordAddress :
+			(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
 		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
@@ -365,7 +399,7 @@ class PictView extends libFableServiceBase
 		}
 
 		let tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
-			(typeof (tmpRenderable.RecordAddress) === 'string') ? tmpRenderable.RecordAddress :
+			(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
 		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;

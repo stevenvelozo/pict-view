@@ -112,81 +112,80 @@ class PictView extends libFableServiceBase
 		}
 	}
 
-    onBeforeSolve()
-    {
-    	if (this.pict.LogNoisiness > 3)
-    	{
-	        this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeSolve:`);    		
-    	}
-        return true;
-    }
-    onBeforeSolveAsync(fCallback)
-    {
-        this.onBeforeSolve();
-        return fCallback();
-    }
+	onBeforeSolve()
+	{
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeSolve:`);
+		}
+		return true;
+	}
+	onBeforeSolveAsync(fCallback)
+	{
+		this.onBeforeSolve();
+		return fCallback();
+	}
 
-    onSolve()
-    {
-        if (this.pict.LogNoisiness > 3)
-        {
-        	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onSolve:`);
-        }
-        return true;
-    }
-    onSolveAsync(fCallback)
-    {
-        this.onSolve();
-        return fCallback();
-    }
+	onSolve()
+	{
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onSolve:`);
+		}
+		return true;
+	}
+	onSolveAsync(fCallback)
+	{
+		this.onSolve();
+		return fCallback();
+	}
 
-    // TODO: do we need an asynchronous version of this?
-    solve()
-    {
-        if (this.pict.LogNoisiness > 2)
-        {
-        	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} executing solve() function...`);
-        }
-        this.onBeforeSolve();
-        this.onSolve();
-        this.onAfterSolve();
-        this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
-        return true;
-    }
+	solve()
+	{
+		if (this.pict.LogNoisiness > 2)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} executing solve() function...`);
+		}
+		this.onBeforeSolve();
+		this.onSolve();
+		this.onAfterSolve();
+		this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
+		return true;
+	}
 
-    solveAsync(fCallback)
-    {
-        let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+	solveAsync(fCallback)
+	{
+		let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
 
-        tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
-        tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
-        tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
+		tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
+		tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
+		tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
 
-        tmpAnticipate.wait(
-            (pError) =>
-            {
-                if (this.pict.LogNoisiness > 2)
-                {
-                	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
-                }
-                this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
-                return fCallback(pError);
-            });
-    }
+		tmpAnticipate.wait(
+			(pError) =>
+			{
+				if (this.pict.LogNoisiness > 2)
+				{
+					this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
+				}
+				this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
+				return fCallback(pError);
+			});
+	}
 
-    onAfterSolve()
-    {
-        if (this.pict.LogNoisiness > 3)
-        {
-        	this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterSolve:`);
-        }
-        return true;
-    }
-    onAfterSolveAsync(fCallback)
-    {
-        this.onAfterSolve();
-        return fCallback();
-    }
+	onAfterSolve()
+	{
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterSolve:`);
+		}
+		return true;
+	}
+	onAfterSolveAsync(fCallback)
+	{
+		this.onAfterSolve();
+		return fCallback();
+	}
 
 	onBeforeInitialize()
 	{

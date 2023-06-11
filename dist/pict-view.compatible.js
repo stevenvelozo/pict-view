@@ -277,7 +277,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
             tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
-            tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
+            tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
             tmpAnticipate.wait(function (pError) {
               if (_this2.pict.LogNoisiness > 2) {
                 _this2.log.trace("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " solveAsync() complete."));

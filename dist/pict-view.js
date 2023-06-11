@@ -243,7 +243,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
           tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
           tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
-          tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
+          tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
           tmpAnticipate.wait(pError => {
             if (this.pict.LogNoisiness > 2) {
               this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));

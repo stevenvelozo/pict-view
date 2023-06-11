@@ -187,7 +187,7 @@ class PictView extends libFableServiceBase
 
 		tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
 		tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
-		tmpAnticipate.anticipate(this.onAfterSolve.bind(this));
+		tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
 
 		tmpAnticipate.wait(
 			(pError) =>

@@ -21,6 +21,11 @@ const defaultPictViewSettings = (
 		AutoSolveWithApp: true,
 		AutoSolveOrdinal: 0,
 
+		CSSHash: false,
+		CSS: false,
+		CSSProvider: false,
+		CSSPriority: 500,
+
 		Templates: [],
 
 		DefaultTemplates: [],
@@ -45,7 +50,7 @@ class PictView extends libFableServiceBase
 		// Convenience and consistency naming
 		this.pict = this.fable;
 		// Wire in the essential Pict application state
-		this.AppData = this.fable.AppData;
+		this.AppData = this.pict.AppData;
 
 		this.initializeTimestamp = false;
 		this.lastSolvedTimestamp = false;
@@ -67,7 +72,7 @@ class PictView extends libFableServiceBase
 				{
 					tmpTemplate.Source = `PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} options object.`;
 				}
-				this.fable.TemplateProvider.addTemplate(tmpTemplate.Hash, tmpTemplate.Template, tmpTemplate.Source);
+				this.pict.TemplateProvider.addTemplate(tmpTemplate.Hash, tmpTemplate.Template, tmpTemplate.Source);
 			}
 		}
 
@@ -87,8 +92,16 @@ class PictView extends libFableServiceBase
 				{
 					tmpDefaultTemplate.Source = `PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} options object.`;
 				}
-				this.fable.TemplateProvider.addDefaultTemplate(tmpDefaultTemplate.Prefix, tmpDefaultTemplate.Postfix, tmpDefaultTemplate.Template, tmpDefaultTemplate.Source);
+				this.pict.TemplateProvider.addDefaultTemplate(tmpDefaultTemplate.Prefix, tmpDefaultTemplate.Postfix, tmpDefaultTemplate.Template, tmpDefaultTemplate.Source);
 			}
+		}
+
+		// Load the CSS if it's available
+		if (this.options.CSS)
+		{
+			let tmpCSSHash = this.options.CSSHash ? this.options.CSSHash : `View-${this.options.ViewIdentifier}`;
+			let tmpCSSProvider = this.options.CSSProvider ? this.options.CSSProvider : tmpCSSHash;
+			this.pict.CSSMap.addCSS(tmpCSSHash, this.options.CSS, tmpCSSProvider, this.options.CSSPriority);
 		}
 
 		// Load all renderables
@@ -177,13 +190,13 @@ class PictView extends libFableServiceBase
 		this.onBeforeSolve();
 		this.onSolve();
 		this.onAfterSolve();
-		this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
+		this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
 		return true;
 	}
 
 	solveAsync(fCallback)
 	{
-		let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+		let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
 
 		tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
 		tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
@@ -196,7 +209,7 @@ class PictView extends libFableServiceBase
 				{
 					this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
 				}
-				this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
+				this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
 				return fCallback(pError);
 			});
 	}
@@ -251,7 +264,7 @@ class PictView extends libFableServiceBase
 			this.onBeforeInitialize();
 			this.onInitialize();
 			this.onAfterInitialize();
-			this.initializeTimestamp = this.fable.log.getTimeStamp();
+			this.initializeTimestamp = this.pict.log.getTimeStamp();
 			return true;
 		}
 		else
@@ -264,7 +277,7 @@ class PictView extends libFableServiceBase
 	{
 		if (!this.initializeTimestamp)
 		{
-			let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+			let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
 
 			if (this.pict.LogNoisiness > 0)
 			{
@@ -278,7 +291,7 @@ class PictView extends libFableServiceBase
 			tmpAnticipate.wait(
 				(pError) =>
 				{
-					this.initializeTimestamp = this.fable.log.getTimeStamp();
+					this.initializeTimestamp = this.pict.log.getTimeStamp();
 					if (this.pict.LogNoisiness > 0)
 					{
 						this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
@@ -355,21 +368,21 @@ class PictView extends libFableServiceBase
 			(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
-		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
 		// Execute the developer-overridable pre-render behavior
 		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
 		// Generate the content output from the template and data
-		let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
+		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
 
 		// Assign the content to the destination address
-		this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+		this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
 
 		// Execute the developer-overridable post-render behavior
 		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent)
 
-		this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
+		this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
 	}
 	renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
 	{
@@ -402,14 +415,14 @@ class PictView extends libFableServiceBase
 			(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
-		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
 
 		// Execute the developer-overridable pre-render behavior
 		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
 		// Render the template (asynchronously)
-		this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData,
+		this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData,
 			(pError, pContent) =>
 			{
 				if (pError)
@@ -419,12 +432,12 @@ class PictView extends libFableServiceBase
 				}
 
 				// Assign the content to the destination address
-				this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+				this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
 
 				// Execute the developer-overridable post-render behavior
 				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent)
 
-				this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
+				this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
 
 				return fCallback(null, pContent);
 			});

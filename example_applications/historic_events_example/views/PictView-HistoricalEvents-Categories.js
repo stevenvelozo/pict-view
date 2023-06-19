@@ -51,8 +51,9 @@ const defaultViewConfiguration = (
 		{
 			RenderableHash: "HistoricalEventCategory-List",
 			TemplateHash: "HistoricalEventCategory-ListWrapper",
-			TemplateRecordAddress: false,
-			DestinationAddress: "#HistoricalEvents-AppContainer"
+			TemplateRecordAddress: 'AppData.EventCategoryList',
+			DestinationAddress: "#HistoricalEvents-AppContainer",
+			RenderMethod: "replace"
 		}
 	]
 });
@@ -98,6 +99,7 @@ module.exports.marshal_JSONData_Into_Object = (pDataHistoricEventSet, pDestinati
 	pDestinationObject.EventCategoryMap = {};
 	for (let i = 0; i < pDataHistoricEventSet.length; i++)
 	{
+		// Each event has a category1 and category2 label
 		if (!pDestinationObject.EventCategoryMap.hasOwnProperty(pDataHistoricEventSet[i].category1))
 		{
 			pDestinationObject.EventCategoryMap[pDataHistoricEventSet[i].category1] = (

@@ -139,6 +139,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         AutoRenderOrdinal: 0,
         AutoSolveWithApp: true,
         AutoSolveOrdinal: 0,
+        CSSHash: false,
+        CSS: false,
+        CSSProvider: false,
+        CSSPriority: 500,
         Templates: [],
         DefaultTemplates: [],
         Renderables: [],
@@ -160,7 +164,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           // Convenience and consistency naming
           _this.pict = _this.fable;
           // Wire in the essential Pict application state
-          _this.AppData = _this.fable.AppData;
+          _this.AppData = _this.pict.AppData;
           _this.initializeTimestamp = false;
           _this.lastSolvedTimestamp = false;
           _this.lastRenderedTimestamp = false;
@@ -175,7 +179,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               if (!tmpTemplate.Source) {
                 tmpTemplate.Source = "PictView [".concat(_this.UUID, "]::[").concat(_this.Hash, "] ").concat(_this.options.ViewIdentifier, " options object.");
               }
-              _this.fable.TemplateProvider.addTemplate(tmpTemplate.Hash, tmpTemplate.Template, tmpTemplate.Source);
+              _this.pict.TemplateProvider.addTemplate(tmpTemplate.Hash, tmpTemplate.Template, tmpTemplate.Source);
             }
           }
 
@@ -189,8 +193,15 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               if (!tmpDefaultTemplate.Source) {
                 tmpDefaultTemplate.Source = "PictView [".concat(_this.UUID, "]::[").concat(_this.Hash, "] ").concat(_this.options.ViewIdentifier, " options object.");
               }
-              _this.fable.TemplateProvider.addDefaultTemplate(tmpDefaultTemplate.Prefix, tmpDefaultTemplate.Postfix, tmpDefaultTemplate.Template, tmpDefaultTemplate.Source);
+              _this.pict.TemplateProvider.addDefaultTemplate(tmpDefaultTemplate.Prefix, tmpDefaultTemplate.Postfix, tmpDefaultTemplate.Template, tmpDefaultTemplate.Source);
             }
+          }
+
+          // Load the CSS if it's available
+          if (_this.options.CSS) {
+            var tmpCSSHash = _this.options.CSSHash ? _this.options.CSSHash : "View-".concat(_this.options.ViewIdentifier);
+            var tmpCSSProvider = _this.options.CSSProvider ? _this.options.CSSProvider : tmpCSSHash;
+            _this.pict.CSSMap.addCSS(tmpCSSHash, _this.options.CSS, tmpCSSProvider, _this.options.CSSPriority);
           }
 
           // Load all renderables
@@ -207,18 +218,20 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }
         _createClass(PictView, [{
           key: "addRenderable",
-          value: function addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress) {
+          value: function addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress, pRenderMethod) {
             var tmpRenderable = false;
             if (_typeof(pRenderableHash) == 'object') {
               // The developer passed in the renderable as an object.
               // Use theirs instead!
               tmpRenderable = pRenderableHash;
             } else {
+              var tmpRenderMethod = typeof pRenderMethod !== 'string' ? pRenderMethod : 'replace';
               tmpRenderable = {
                 RenderableHash: pRenderableHash,
                 TemplateHash: pTemplateHash,
                 DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
-                DefaultDestinationAddress: pDefaultDestinationAddress
+                DefaultDestinationAddress: pDefaultDestinationAddress,
+                RenderMethod: tmpRenderMethod
               };
             }
             if (typeof tmpRenderable.RenderableHash != 'string' || typeof tmpRenderable.TemplateHash != 'string') {
@@ -267,14 +280,14 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             this.onBeforeSolve();
             this.onSolve();
             this.onAfterSolve();
-            this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
+            this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
             return true;
           }
         }, {
           key: "solveAsync",
           value: function solveAsync(fCallback) {
             var _this2 = this;
-            var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+            var tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
             tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
@@ -282,7 +295,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               if (_this2.pict.LogNoisiness > 2) {
                 _this2.log.trace("PictView [".concat(_this2.UUID, "]::[").concat(_this2.Hash, "] ").concat(_this2.options.ViewIdentifier, " solveAsync() complete."));
               }
-              _this2.lastSolvedTimestamp = _this2.fable.log.getTimeStamp();
+              _this2.lastSolvedTimestamp = _this2.pict.log.getTimeStamp();
               return fCallback(pError);
             });
           }
@@ -335,7 +348,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               this.onBeforeInitialize();
               this.onInitialize();
               this.onAfterInitialize();
-              this.initializeTimestamp = this.fable.log.getTimeStamp();
+              this.initializeTimestamp = this.pict.log.getTimeStamp();
               return true;
             } else {
               this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize called but initialization is already completed.  Aborting."));
@@ -347,7 +360,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           value: function initializeAsync(fCallback) {
             var _this3 = this;
             if (!this.initializeTimestamp) {
-              var tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+              var tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
               if (this.pict.LogNoisiness > 0) {
                 this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
               }
@@ -355,7 +368,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
               tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
               tmpAnticipate.wait(function (pError) {
-                _this3.initializeTimestamp = _this3.fable.log.getTimeStamp();
+                _this3.initializeTimestamp = _this3.pict.log.getTimeStamp();
                 if (_this3.pict.LogNoisiness > 0) {
                   _this3.log.info("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " initialization complete."));
                 }
@@ -415,20 +428,37 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               return false;
             }
             var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-            var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+            var tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
             // Execute the developer-overridable pre-render behavior
             this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
             // Generate the content output from the template and data
-            var tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
+            var tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
 
             // Assign the content to the destination address
-            this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+            switch (tmpRenderable.RenderMethod) {
+              case 'append':
+                this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                break;
+              case 'prepend':
+                this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+                break;
+              case 'append_once':
+                // Try to find the content in the destination address
+                var tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
+                if (tmpExistingContent.indexOf(tmpContent) === -1) {
+                  this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                }
+              case 'replace':
+              default:
+                this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+                break;
+            }
 
             // Execute the developer-overridable post-render behavior
             this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent);
-            this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
+            this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
           }
         }, {
           key: "renderAsync",
@@ -450,24 +480,41 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               return fCallback(Error("Could not render ".concat(tmpRenderableHash)));
             }
             var tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-            var tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+            var tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
             // Execute the developer-overridable pre-render behavior
             this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
             // Render the template (asynchronously)
-            this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, function (pError, pContent) {
+            this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, function (pError, pContent) {
               if (pError) {
                 _this4.log.error("PictView [".concat(_this4.UUID, "]::[").concat(_this4.Hash, "] ").concat(_this4.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
                 return fCallback(pError);
               }
 
               // Assign the content to the destination address
-              _this4.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+              switch (tmpRenderable.RenderMethod) {
+                case 'append':
+                  _this4.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                  break;
+                case 'prepend':
+                  _this4.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+                  break;
+                case 'append_once':
+                  // Try to find the content in the destination address
+                  var tmpExistingContent = _this4.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
+                  if (tmpExistingContent.indexOf(tmpContent) === -1) {
+                    _this4.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                  }
+                case 'replace':
+                default:
+                  _this4.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+                  break;
+              }
 
               // Execute the developer-overridable post-render behavior
               _this4.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
-              _this4.lastRenderedTimestamp = _this4.fable.log.getTimeStamp();
+              _this4.lastRenderedTimestamp = _this4.pict.log.getTimeStamp();
               return fCallback(null, pContent);
             });
           }

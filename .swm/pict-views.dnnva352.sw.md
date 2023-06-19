@@ -5,9 +5,9 @@ file_version: 1.1.2
 app_version: 1.10.2
 ---
 
-Pict is a non-opinionated set of tools to provide Model, View and Controller patterns to web applications, console applications and other applications where the UI is primarily represented as text strings.
+Pict is a non-opinionated set of tools to provide the disparate parts of Model, View and Controller patterns to web, console and other applications where the UI is primarily represented as text strings.
 
-According to Wikipedia, the acknowledged universal source of truth for humanity, a software View is:
+According to Wikipedia (_the acknowledged universal source of truth for humanity?_), a software View is:
 
 > View
 > 
@@ -18,19 +18,6 @@ According to Wikipedia, the acknowledged universal source of truth for humanity,
 > With Rails and Django, the role of the view is played by HTML templates, so in their scheme a view specifies an in-browser user interface rather than representing a user interface widget directly. (Django opts to call this kind of object a "template" in light of this.) This approach puts relatively less emphasis on small, composable views; a typical Rails view has a one-to-one relationship with a controller action.
 > 
 > Smalltalk-80 views communicate with both a model and a controller, whereas with WebObjects, a view talks only to a controller, which then talks to a model. With Rails and Django, a view/template is used by a controller/view when preparing a response to the client.
-
-The vocabulary used in a pict view is:
-
-<br/>
-
-|Term      |Definition                              |
-|----------|----------------------------------------|
-|Initialize|<br/>                                   |
-|Manifest  |A manyfest description of a JSON object.|
-|Render    |<br/>                                   |
-|Renderable|<br/>                                   |
-|Solve     |<br/>                                   |
-|Template  |<br/>                                   |
 
 <br/>
 

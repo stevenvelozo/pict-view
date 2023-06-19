@@ -125,6 +125,10 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
         AutoRenderOrdinal: 0,
         AutoSolveWithApp: true,
         AutoSolveOrdinal: 0,
+        CSSHash: false,
+        CSS: false,
+        CSSProvider: false,
+        CSSPriority: 500,
         Templates: [],
         DefaultTemplates: [],
         Renderables: [],
@@ -142,7 +146,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           // Convenience and consistency naming
           this.pict = this.fable;
           // Wire in the essential Pict application state
-          this.AppData = this.fable.AppData;
+          this.AppData = this.pict.AppData;
           this.initializeTimestamp = false;
           this.lastSolvedTimestamp = false;
           this.lastRenderedTimestamp = false;
@@ -157,7 +161,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
               if (!tmpTemplate.Source) {
                 tmpTemplate.Source = "PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " options object.");
               }
-              this.fable.TemplateProvider.addTemplate(tmpTemplate.Hash, tmpTemplate.Template, tmpTemplate.Source);
+              this.pict.TemplateProvider.addTemplate(tmpTemplate.Hash, tmpTemplate.Template, tmpTemplate.Source);
             }
           }
 
@@ -171,8 +175,15 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
               if (!tmpDefaultTemplate.Source) {
                 tmpDefaultTemplate.Source = "PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " options object.");
               }
-              this.fable.TemplateProvider.addDefaultTemplate(tmpDefaultTemplate.Prefix, tmpDefaultTemplate.Postfix, tmpDefaultTemplate.Template, tmpDefaultTemplate.Source);
+              this.pict.TemplateProvider.addDefaultTemplate(tmpDefaultTemplate.Prefix, tmpDefaultTemplate.Postfix, tmpDefaultTemplate.Template, tmpDefaultTemplate.Source);
             }
+          }
+
+          // Load the CSS if it's available
+          if (this.options.CSS) {
+            let tmpCSSHash = this.options.CSSHash ? this.options.CSSHash : "View-".concat(this.options.ViewIdentifier);
+            let tmpCSSProvider = this.options.CSSProvider ? this.options.CSSProvider : tmpCSSHash;
+            this.pict.CSSMap.addCSS(tmpCSSHash, this.options.CSS, tmpCSSProvider, this.options.CSSPriority);
           }
 
           // Load all renderables
@@ -186,18 +197,20 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.addRenderable(this.options.Renderables[i]);
           }
         }
-        addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress) {
+        addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress, pRenderMethod) {
           let tmpRenderable = false;
           if (typeof pRenderableHash == 'object') {
             // The developer passed in the renderable as an object.
             // Use theirs instead!
             tmpRenderable = pRenderableHash;
           } else {
+            let tmpRenderMethod = typeof pRenderMethod !== 'string' ? pRenderMethod : 'replace';
             tmpRenderable = {
               RenderableHash: pRenderableHash,
               TemplateHash: pTemplateHash,
               DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
-              DefaultDestinationAddress: pDefaultDestinationAddress
+              DefaultDestinationAddress: pDefaultDestinationAddress,
+              RenderMethod: tmpRenderMethod
             };
           }
           if (typeof tmpRenderable.RenderableHash != 'string' || typeof tmpRenderable.TemplateHash != 'string') {
@@ -236,11 +249,11 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           this.onBeforeSolve();
           this.onSolve();
           this.onAfterSolve();
-          this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
+          this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
           return true;
         }
         solveAsync(fCallback) {
-          let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+          let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
           tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
           tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
           tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
@@ -248,7 +261,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             if (this.pict.LogNoisiness > 2) {
               this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
             }
-            this.lastSolvedTimestamp = this.fable.log.getTimeStamp();
+            this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
             return fCallback(pError);
           });
         }
@@ -287,7 +300,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.onBeforeInitialize();
             this.onInitialize();
             this.onAfterInitialize();
-            this.initializeTimestamp = this.fable.log.getTimeStamp();
+            this.initializeTimestamp = this.pict.log.getTimeStamp();
             return true;
           } else {
             this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize called but initialization is already completed.  Aborting."));
@@ -296,7 +309,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
         }
         initializeAsync(fCallback) {
           if (!this.initializeTimestamp) {
-            let tmpAnticipate = this.fable.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+            let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
             if (this.pict.LogNoisiness > 0) {
               this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
             }
@@ -304,7 +317,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
             tmpAnticipate.wait(pError => {
-              this.initializeTimestamp = this.fable.log.getTimeStamp();
+              this.initializeTimestamp = this.pict.log.getTimeStamp();
               if (this.pict.LogNoisiness > 0) {
                 this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialization complete."));
               }
@@ -354,20 +367,37 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             return false;
           }
           let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-          let tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+          let tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
           // Execute the developer-overridable pre-render behavior
           this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
           // Generate the content output from the template and data
-          let tmpContent = this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
+          let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
 
           // Assign the content to the destination address
-          this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+          switch (tmpRenderable.RenderMethod) {
+            case 'append':
+              this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+              break;
+            case 'prepend':
+              this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+              break;
+            case 'append_once':
+              // Try to find the content in the destination address
+              let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
+              if (tmpExistingContent.indexOf(tmpContent) === -1) {
+                this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+              }
+            case 'replace':
+            default:
+              this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+              break;
+          }
 
           // Execute the developer-overridable post-render behavior
           this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent);
-          this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
+          this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
         }
         renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : false;
@@ -386,24 +416,41 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             return fCallback(Error("Could not render ".concat(tmpRenderableHash)));
           }
           let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-          let tmpData = typeof tmpDataAddress === 'string' ? this.fable.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+          let tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 
           // Execute the developer-overridable pre-render behavior
           this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
           // Render the template (asynchronously)
-          this.fable.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, (pError, pContent) => {
+          this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, (pError, pContent) => {
             if (pError) {
               this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
               return fCallback(pError);
             }
 
             // Assign the content to the destination address
-            this.fable.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+            switch (tmpRenderable.RenderMethod) {
+              case 'append':
+                this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                break;
+              case 'prepend':
+                this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+                break;
+              case 'append_once':
+                // Try to find the content in the destination address
+                let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
+                if (tmpExistingContent.indexOf(tmpContent) === -1) {
+                  this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                }
+              case 'replace':
+              default:
+                this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+                break;
+            }
 
             // Execute the developer-overridable post-render behavior
             this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
-            this.lastRenderedTimestamp = this.fable.log.getTimeStamp();
+            this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
             return fCallback(null, pContent);
           });
         }

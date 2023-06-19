@@ -117,7 +117,7 @@ class PictView extends libFableServiceBase
 		}
 	}
 
-	addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress)
+	addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress, pRenderMethod)
 	{
 		let tmpRenderable = false;
 
@@ -129,12 +129,14 @@ class PictView extends libFableServiceBase
 		}
 		else
 		{
+			let tmpRenderMethod = (typeof(pRenderMethod) !== 'string') ? pRenderMethod : 'replace';
 			tmpRenderable = (
 				{
 					RenderableHash: pRenderableHash,
 					TemplateHash: pTemplateHash,
 					DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
-					DefaultDestinationAddress: pDefaultDestinationAddress
+					DefaultDestinationAddress: pDefaultDestinationAddress,
+					RenderMethod: tmpRenderMethod
 				});
 		}
 
@@ -377,7 +379,26 @@ class PictView extends libFableServiceBase
 		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
 
 		// Assign the content to the destination address
-		this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+		switch(tmpRenderable.RenderMethod)
+		{
+			case 'append':
+				this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+				break;
+			case 'prepend':
+				this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+				break;
+			case 'append_once':
+				// Try to find the content in the destination address
+				let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderableHash}`);
+				if (tmpExistingContent.indexOf(tmpContent) === -1)
+				{
+					this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+				}
+			case 'replace':
+			default:
+				this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+				break;
+		}
 
 		// Execute the developer-overridable post-render behavior
 		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent)
@@ -432,7 +453,26 @@ class PictView extends libFableServiceBase
 				}
 
 				// Assign the content to the destination address
-				this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+				switch(tmpRenderable.RenderMethod)
+				{
+					case 'append':
+						this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+						break;
+					case 'prepend':
+						this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+						break;
+					case 'append_once':
+						// Try to find the content in the destination address
+						let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderableHash}`);
+						if (tmpExistingContent.indexOf(tmpContent) === -1)
+						{
+							this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+						}
+					case 'replace':
+					default:
+						this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+						break;
+				}
 
 				// Execute the developer-overridable post-render behavior
 				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent)

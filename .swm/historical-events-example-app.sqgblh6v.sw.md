@@ -13,33 +13,24 @@ The data is from a really cool data set of historic events scraped from wikipedi
 
 Each redord in the data set has zero, one or two categories. These categories are a little messy; there are two strings (category1 and category2) which define a sort of loose taxonomy for the events. For example:
 
-<br/>
-
-A couple of example records with categories:
-<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
-### 📄 example_applications/historic_events_example/data/EnglishHistoricEvents-Data.json
-<!-- collapsed -->
-
 ```json
-70870      {
-70871          "date": "1158/11/29",
-70872          "description": "Spain: Raymundo, abbot of the Fitero Abbey (Navarra), pledges to defend the fortress of Calatrava from incoming Muslim raiders. It is the founding moment of the Order of Calatrava, the spearhead of the Iberian armies during the Reconquista.ampref name=estow1982amp{{cite journal|last=Estow|first=Clara|title=The Economic Development of the Order of Calatrava, 1158-1366|journal=Speculum|year=1982|volume=57|issue=2|pages=267–291}}ampamp",
-70873          "lang": "en",
-70874          "category1": "By place",
-70875          "category2": "Europe",
-70876          "granularity": "year"
-70877      },
-70878      {
-70879          "date": "1158/11/29",
-70880          "description": "British Pound Sterling (currency) is introduced.",
-70881          "lang": "en",
-70882          "category1": "By topic",
-70883          "category2": "Economy",
-70884          "granularity": "year"
-70885      },
+{
+    "date": "1158/11/29",
+    "description": "Spain: Raymundo, abbot of the Fitero Abbey (Navarra), pledges to defend the fortress of Calatrava from incoming Muslim raiders. It is the founding moment of the Order of Calatrava, the spearhead of the Iberian armies during the Reconquista.ampref name=estow1982amp{{cite journal|last=Estow|first=Clara|title=The Economic Development of the Order of Calatrava, 1158-1366|journal=Speculum|year=1982|volume=57|issue=2|pages=267–291}}ampamp",
+    "lang": "en",
+    "category1": "By place",
+    "category2": "Europe",
+    "granularity": "year"
+},
+{
+    "date": "1158/11/29",
+    "description": "British Pound Sterling (currency) is introduced.",
+    "lang": "en",
+    "category1": "By topic",
+    "category2": "Economy",
+    "granularity": "year"
+},
 ```
-
-<br/>
 
 These inconsistencies with the records are a common type of problem in getting data:
 

@@ -447,7 +447,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
               case 'append_once':
                 // Try to find the content in the destination address
                 var tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
-                if (tmpExistingContent.indexOf(tmpContent) === -1) {
+                if (tmpExistingContent.length < 1) {
                   this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
                 }
               case 'replace':
@@ -503,7 +503,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
                 case 'append_once':
                   // Try to find the content in the destination address
                   var tmpExistingContent = _this4.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
-                  if (tmpExistingContent.indexOf(tmpContent) === -1) {
+                  if (tmpExistingContent.length < 1) {
                     _this4.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
                   }
                 case 'replace':

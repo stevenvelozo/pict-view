@@ -386,7 +386,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             case 'append_once':
               // Try to find the content in the destination address
               let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
-              if (tmpExistingContent.indexOf(tmpContent) === -1) {
+              if (tmpExistingContent.length < 1) {
                 this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
               }
             case 'replace':
@@ -439,7 +439,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
               case 'append_once':
                 // Try to find the content in the destination address
                 let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
-                if (tmpExistingContent.indexOf(tmpContent) === -1) {
+                if (tmpExistingContent.length < 1) {
                   this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
                 }
               case 'replace':

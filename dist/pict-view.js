@@ -400,7 +400,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
         }
         renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
-          let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : false;
+          let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
           if (!tmpRenderableHash) {
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, "because it is not a valid renderable."));
             return fCallback(Error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, "because it is not a valid renderable.")));

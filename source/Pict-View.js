@@ -407,7 +407,8 @@ class PictView extends libFableServiceBase
 	}
 	renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
 	{
-		let tmpRenderableHash = (typeof (pRenderable) === 'string') ? pRenderable : false;
+		let tmpRenderableHash = (typeof (pRenderable) === 'string') ? pRenderable :
+			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
 		if (!tmpRenderableHash)
 		{
 			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderable}because it is not a valid renderable.`);

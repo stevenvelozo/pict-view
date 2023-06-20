@@ -457,21 +457,21 @@ class PictView extends libFableServiceBase
 				switch(tmpRenderable.RenderMethod)
 				{
 					case 'append':
-						this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+						this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
 						break;
 					case 'prepend':
-						this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+						this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
 						break;
 					case 'append_once':
 						// Try to find the content in the destination address
 						let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderableHash}`);
 						if (tmpExistingContent.length < 1)
 						{
-							this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+							this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
 						}
 					case 'replace':
 					default:
-						this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+						this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
 						break;
 				}
 

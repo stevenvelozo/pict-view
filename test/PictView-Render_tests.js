@@ -47,6 +47,13 @@ suite
 
 								Expect(_PictView).to.be.an('object');
 								console.log(JSON.stringify(_PictEnvironment.eventLog.Assign[0].Content));
+
+								Expect(_PictView.lastMarshalToViewTimestamp).to.equal(false);
+								Expect(_PictView.marshalToView()).to.equal(true);
+								Expect(_PictView.lastMarshalToViewTimestamp).to.be.a('number');
+								Expect(_PictView.solve()).to.equal(true);
+								Expect(_PictView.render()).to.equal(true);
+								Expect(_PictView.marshalFromView()).to.equal(true);
 								return fDone();
 							}
 						);

@@ -2,7 +2,7 @@ const libPictApplication = require('pict-application');
 
 const defaultApplicationConfiguration = (
 	{
-	    "Name": "Simple Test Application"
+		"Name": "Simple Test Application"
 	});
 
 class SimpleApplication extends libPictApplication

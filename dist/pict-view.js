@@ -150,6 +150,8 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           this.initializeTimestamp = false;
           this.lastSolvedTimestamp = false;
           this.lastRenderedTimestamp = false;
+          this.lastMarshalFromViewTimestamp = false;
+          this.lastMarshalToViewTimestamp = false;
 
           // Load all templates from the array in the options
           // Templates are in the form of {Hash:'Some-Template-Hash',Template:'Template content',Source:'TemplateSource'}
@@ -222,59 +224,10 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.renderables[tmpRenderable.RenderableHash] = tmpRenderable;
           }
         }
-        onBeforeSolve() {
-          if (this.pict.LogNoisiness > 3) {
-            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
-          }
-          return true;
-        }
-        onBeforeSolveAsync(fCallback) {
-          this.onBeforeSolve();
-          return fCallback();
-        }
-        onSolve() {
-          if (this.pict.LogNoisiness > 3) {
-            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
-          }
-          return true;
-        }
-        onSolveAsync(fCallback) {
-          this.onSolve();
-          return fCallback();
-        }
-        solve() {
-          if (this.pict.LogNoisiness > 2) {
-            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
-          }
-          this.onBeforeSolve();
-          this.onSolve();
-          this.onAfterSolve();
-          this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
-          return true;
-        }
-        solveAsync(fCallback) {
-          let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
-          tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
-          tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
-          tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
-          tmpAnticipate.wait(pError => {
-            if (this.pict.LogNoisiness > 2) {
-              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
-            }
-            this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
-            return fCallback(pError);
-          });
-        }
-        onAfterSolve() {
-          if (this.pict.LogNoisiness > 3) {
-            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
-          }
-          return true;
-        }
-        onAfterSolveAsync(fCallback) {
-          this.onAfterSolve();
-          return fCallback();
-        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                        Code Section: Initialization                        */
+        /* -------------------------------------------------------------------------- */
         onBeforeInitialize() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
@@ -339,6 +292,10 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           this.onAfterInitialize();
           return fCallback();
         }
+
+        /* -------------------------------------------------------------------------- */
+        /*                            Code Section: Render                            */
+        /* -------------------------------------------------------------------------- */
         onBeforeRender(pRenderable, pRenderDestinationAddress, pData) {
           // Overload this to mess with stuff before the content gets generated from the template
           if (this.pict.LogNoisiness > 3) {
@@ -398,6 +355,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           // Execute the developer-overridable post-render behavior
           this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent);
           this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
+          return true;
         }
         renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
@@ -431,20 +389,20 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             // Assign the content to the destination address
             switch (tmpRenderable.RenderMethod) {
               case 'append':
-                this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
                 break;
               case 'prepend':
-                this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
+                this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
                 break;
               case 'append_once':
                 // Try to find the content in the destination address
                 let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
                 if (tmpExistingContent.length < 1) {
-                  this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
+                  this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
                 }
               case 'replace':
               default:
-                this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
+                this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
                 break;
             }
 
@@ -462,6 +420,177 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
         }
         onAfterRenderAsync(fCallback) {
           this.onAfterRender();
+          return fCallback();
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                            Code Section: Solver                            */
+        /* -------------------------------------------------------------------------- */
+        onBeforeSolve() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
+          }
+          return true;
+        }
+        onBeforeSolveAsync(fCallback) {
+          this.onBeforeSolve();
+          return fCallback();
+        }
+        onSolve() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
+          }
+          return true;
+        }
+        onSolveAsync(fCallback) {
+          this.onSolve();
+          return fCallback();
+        }
+        solve() {
+          if (this.pict.LogNoisiness > 2) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+          }
+          this.onBeforeSolve();
+          this.onSolve();
+          this.onAfterSolve();
+          this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
+          return true;
+        }
+        solveAsync(fCallback) {
+          let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+          tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
+          tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
+          tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
+          tmpAnticipate.wait(pError => {
+            if (this.pict.LogNoisiness > 2) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
+            }
+            this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
+            return fCallback(pError);
+          });
+        }
+        onAfterSolve() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
+          }
+          return true;
+        }
+        onAfterSolveAsync(fCallback) {
+          this.onAfterSolve();
+          return fCallback();
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                     Code Section: Marshal From View                        */
+        /* -------------------------------------------------------------------------- */
+        onBeforeMarshalFromView() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeMarshalFromView:"));
+          }
+          return true;
+        }
+        onBeforeMarshalFromViewAsync(fCallback) {
+          this.onBeforeMarshalFromView();
+          return fCallback();
+        }
+        onMarshalFromView() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onMarshalFromView:"));
+          }
+          return true;
+        }
+        onMarshalFromViewAsync(fCallback) {
+          this.onMarshalFromView();
+          return fCallback();
+        }
+        marshalFromView() {
+          if (this.pict.LogNoisiness > 2) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+          }
+          this.onBeforeMarshalFromView();
+          this.onMarshalFromView();
+          this.onAfterMarshalFromView();
+          this.lastMarshalFromViewTimestamp = this.pict.log.getTimeStamp();
+          return true;
+        }
+        marshalFromViewAsync(fCallback) {
+          let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+          tmpAnticipate.anticipate(this.onBeforeMarshalFromViewAsync.bind(this));
+          tmpAnticipate.anticipate(this.onMarshalFromViewAsync.bind(this));
+          tmpAnticipate.anticipate(this.onAfterMarshalFromViewAsync.bind(this));
+          tmpAnticipate.wait(pError => {
+            if (this.pict.LogNoisiness > 2) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
+            }
+            this.lastMarshalFromViewTimestamp = this.pict.log.getTimeStamp();
+            return fCallback(pError);
+          });
+        }
+        onAfterMarshalFromView() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterMarshalFromView:"));
+          }
+          return true;
+        }
+        onAfterMarshalFromViewAsync(fCallback) {
+          this.onAfterMarshalFromView();
+          return fCallback();
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                     Code Section: Marshal To View                          */
+        /* -------------------------------------------------------------------------- */
+        onBeforeMarshalToView() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeMarshalToView:"));
+          }
+          return true;
+        }
+        onBeforeMarshalToViewAsync(fCallback) {
+          this.onBeforeMarshalToView();
+          return fCallback();
+        }
+        onMarshalToView() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onMarshalToView:"));
+          }
+          return true;
+        }
+        onMarshalToViewAsync(fCallback) {
+          this.onMarshalToView();
+          return fCallback();
+        }
+        marshalToView() {
+          if (this.pict.LogNoisiness > 2) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
+          }
+          this.onBeforeMarshalToView();
+          this.onMarshalToView();
+          this.onAfterMarshalToView();
+          this.lastMarshalToViewTimestamp = this.pict.log.getTimeStamp();
+          return true;
+        }
+        marshalToViewAsync(fCallback) {
+          let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+          tmpAnticipate.anticipate(this.onBeforeMarshalToViewAsync.bind(this));
+          tmpAnticipate.anticipate(this.onMarshalToViewAsync.bind(this));
+          tmpAnticipate.anticipate(this.onAfterMarshalToViewAsync.bind(this));
+          tmpAnticipate.wait(pError => {
+            if (this.pict.LogNoisiness > 2) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " solveAsync() complete."));
+            }
+            this.lastMarshalToViewTimestamp = this.pict.log.getTimeStamp();
+            return fCallback(pError);
+          });
+        }
+        onAfterMarshalToView() {
+          if (this.pict.LogNoisiness > 3) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterMarshalToView:"));
+          }
+          return true;
+        }
+        onAfterMarshalToViewAsync(fCallback) {
+          this.onAfterMarshalToView();
           return fCallback();
         }
       }

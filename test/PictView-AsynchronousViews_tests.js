@@ -33,7 +33,7 @@ suite
 							{
 								let _Pict = new libPict();
 								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
-								let _PictView = _Pict.addView(`View-Test-Async`);
+								let _PictView = _Pict.addView(`View-Test-Async`, false, SimpleAsyncView);
 
 								_PictView.initializeAsync(
 									(pError) =>
@@ -70,7 +70,7 @@ suite
 								let _Pict = new libPict();
 								_Pict.LogNoisiness = 5;
 								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
-								let tmpAnticipate = _Pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+								let tmpAnticipate = _Pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 								tmpAnticipate.maxOperations = 3;
 								for (let i = 0; i < 3; i++)
 								{
@@ -91,7 +91,7 @@ suite
 								let _Pict = new libPict();
 								_Pict.LogNoisiness = 1;
 								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
-								let tmpAnticipate = _Pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+								let tmpAnticipate = _Pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 								tmpAnticipate.maxOperations = 10;
 								for (let i = 0; i < 10; i++)
 								{
@@ -112,7 +112,7 @@ suite
 								let _Pict = new libPict();
 								_Pict.LogNoisiness = 0;
 								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
-								let tmpAnticipate = _Pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+								let tmpAnticipate = _Pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 								tmpAnticipate.maxOperations = 5000;
 								for (let i = 0; i < 10000; i++)
 								{

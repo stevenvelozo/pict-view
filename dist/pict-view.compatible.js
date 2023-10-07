@@ -13,7 +13,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
-function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 (function (f) {
   if ((typeof exports === "undefined" ? "undefined" : _typeof(exports)) === "object" && typeof module !== "undefined") {
     module.exports = f();
@@ -62,67 +62,71 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
   }()({
     1: [function (require, module, exports) {
       /**
-      * Fable Core Pre-initialization Service Base
-      *
-      * For a couple services, we need to be able to instantiate them before the Fable object is fully initialized.
-      * This is a base class for those services.
-      *
-      * @author <steven@velozo.com>
-      */
-      var FableCoreServiceProviderBase = /*#__PURE__*/function () {
-        function FableCoreServiceProviderBase(pOptions, pServiceHash) {
-          _classCallCheck(this, FableCoreServiceProviderBase);
-          this.fable = false;
-          this.options = _typeof(pOptions) === 'object' ? pOptions : {};
-          this.serviceType = 'Unknown';
-
-          // The hash will be a non-standard UUID ... the UUID service uses this base class!
-          this.UUID = "CORESVC-".concat(Math.floor(Math.random() * (99999 - 10000) + 10000));
-          this.Hash = typeof pServiceHash === 'string' ? pServiceHash : "".concat(this.UUID);
-        }
-        _createClass(FableCoreServiceProviderBase, [{
-          key: "connectFable",
-          value:
-          // After fable is initialized, it would be expected to be wired in as a normal service.
-          function connectFable(pFable) {
-            this.fable = pFable;
-            return true;
-          }
-        }]);
-        return FableCoreServiceProviderBase;
-      }();
-      _defineProperty(FableCoreServiceProviderBase, "isFableService", true);
-      module.exports = FableCoreServiceProviderBase;
-    }, {}],
-    2: [function (require, module, exports) {
-      /**
       * Fable Service Base
       * @author <steven@velozo.com>
       */
-      var FableServiceProviderBase = /*#__PURE__*/_createClass(function FableServiceProviderBase(pFable, pOptions, pServiceHash) {
-        _classCallCheck(this, FableServiceProviderBase);
-        this.fable = pFable;
-        this.options = _typeof(pOptions) === 'object' ? pOptions : _typeof(pFable) === 'object' && !pFable.isFable ? pFable : {};
-        this.serviceType = 'Unknown';
-        if (typeof pFable.getUUID == 'function') {
-          this.UUID = pFable.getUUID();
-        } else {
-          this.UUID = "NoFABLESVC-".concat(Math.floor(Math.random() * (99999 - 10000) + 10000));
-        }
-        this.Hash = typeof pServiceHash === 'string' ? pServiceHash : "".concat(this.UUID);
+      var FableServiceProviderBase = /*#__PURE__*/function () {
+        // The constructor can be used in two ways:
+        // 1) With a fable, options object and service hash (the options object and service hash are optional)
+        // 2) With an object or nothing as the first parameter, where it will be treated as the options object
+        function FableServiceProviderBase(pFable, pOptions, pServiceHash) {
+          _classCallCheck(this, FableServiceProviderBase);
+          // Check if a fable was passed in; connect it if so
+          if (_typeof(pFable) === 'object' && pFable.isFable) {
+            this.connectFable(pFable);
+          } else {
+            this.fable = false;
+          }
 
-        // Pull back a few things
-        this.log = this.fable.log;
-        this.servicesMap = this.fable.servicesMap;
-        this.services = this.fable.services;
-      });
+          // initialize options and UUID based on whether the fable was passed in or not.
+          if (this.fable) {
+            this.UUID = pFable.getUUID();
+            this.options = _typeof(pOptions) === 'object' ? pOptions : {};
+          } else {
+            // With no fable, check to see if there was an object passed into either of the first two
+            // Parameters, and if so, treat it as the options object
+            this.options = _typeof(pFable) === 'object' && !pFable.isFable ? pFable : _typeof(pOptions) === 'object' ? pOptions : {};
+            this.UUID = "CORE-SVC-".concat(Math.floor(Math.random() * (99999 - 10000) + 10000));
+          }
+
+          // It's expected that the deriving class will set this
+          this.serviceType = "Unknown-".concat(this.UUID);
+
+          // The service hash is used to identify the specific instantiation of the service in the services map
+          this.Hash = typeof pServiceHash === 'string' ? pServiceHash : !this.fable && typeof pOptions === 'string' ? pOptions : "".concat(this.UUID);
+        }
+        _createClass(FableServiceProviderBase, [{
+          key: "connectFable",
+          value: function connectFable(pFable) {
+            if (_typeof(pFable) !== 'object' || !pFable.isFable) {
+              var tmpErrorMessage = "Fable Service Provider Base: Cannot connect to Fable, invalid Fable object passed in.  The pFable parameter was a [".concat(_typeof(pFable), "].}");
+              console.log(tmpErrorMessage);
+              return new Error(tmpErrorMessage);
+            }
+            if (!this.fable) {
+              this.fable = pFable;
+            }
+            if (!this.log) {
+              this.log = this.fable.Logging;
+            }
+            if (!this.services) {
+              this.services = this.fable.services;
+            }
+            if (!this.servicesMap) {
+              this.servicesMap = this.fable.servicesMap;
+            }
+            return true;
+          }
+        }]);
+        return FableServiceProviderBase;
+      }();
       _defineProperty(FableServiceProviderBase, "isFableService", true);
       module.exports = FableServiceProviderBase;
-      module.exports.CoreServiceProviderBase = require('./Fable-ServiceProviderBase-Preinit.js');
-    }, {
-      "./Fable-ServiceProviderBase-Preinit.js": 1
-    }],
-    3: [function (require, module, exports) {
+
+      // This is left here in case we want to go back to having different code/base class for "core" services
+      module.exports.CoreServiceProviderBase = FableServiceProviderBase;
+    }, {}],
+    2: [function (require, module, exports) {
       var libFableServiceBase = require('fable-serviceproviderbase');
       var defaultPictViewSettings = {
         DefaultRenderable: false,
@@ -296,7 +300,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           value: function initializeAsync(fCallback) {
             var _this2 = this;
             if (!this.initializeTimestamp) {
-              var tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+              var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
               if (this.pict.LogNoisiness > 0) {
                 this.log.info("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " beginning initialization..."));
               }
@@ -521,7 +525,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           key: "solveAsync",
           value: function solveAsync(fCallback) {
             var _this4 = this;
-            var tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+            var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
             tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
@@ -595,7 +599,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           key: "marshalFromViewAsync",
           value: function marshalFromViewAsync(fCallback) {
             var _this5 = this;
-            var tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+            var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
             tmpAnticipate.anticipate(this.onBeforeMarshalFromViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onMarshalFromViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterMarshalFromViewAsync.bind(this));
@@ -669,7 +673,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           key: "marshalToViewAsync",
           value: function marshalToViewAsync(fCallback) {
             var _this6 = this;
-            var tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+            var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
             tmpAnticipate.anticipate(this.onBeforeMarshalToViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onMarshalToViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterMarshalToViewAsync.bind(this));
@@ -700,7 +704,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       }(libFableServiceBase);
       module.exports = PictView;
     }, {
-      "fable-serviceproviderbase": 2
+      "fable-serviceproviderbase": 1
     }]
-  }, {}, [3])(3);
+  }, {}, [2])(2);
 });

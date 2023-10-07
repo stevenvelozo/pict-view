@@ -209,7 +209,7 @@ class PictView extends libFableServiceBase
 	{
 		if (!this.initializeTimestamp)
 		{
-			let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+			let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
 			if (this.pict.LogNoisiness > 0)
 			{
@@ -479,7 +479,7 @@ class PictView extends libFableServiceBase
 
 	solveAsync(fCallback)
 	{
-		let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
 		tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
 		tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
@@ -557,7 +557,7 @@ class PictView extends libFableServiceBase
 
 	marshalFromViewAsync(fCallback)
 	{
-		let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
 		tmpAnticipate.anticipate(this.onBeforeMarshalFromViewAsync.bind(this));
 		tmpAnticipate.anticipate(this.onMarshalFromViewAsync.bind(this));
@@ -635,7 +635,7 @@ class PictView extends libFableServiceBase
 
 	marshalToViewAsync(fCallback)
 	{
-		let tmpAnticipate = this.pict.serviceManager.instantiateServiceProviderWithoutRegistration('Anticipate');
+		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
 		tmpAnticipate.anticipate(this.onBeforeMarshalToViewAsync.bind(this));
 		tmpAnticipate.anticipate(this.onMarshalToViewAsync.bind(this));

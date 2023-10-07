@@ -4,6 +4,8 @@
 .gulpfile-quackage.js
 .package.json.quackage.bak
 
+package-lock.json
+
 # Test coverage
 .nyc_output
 

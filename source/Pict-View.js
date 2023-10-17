@@ -410,12 +410,10 @@ class PictView extends libFableServiceBase
 						break;
 				}
 
-				// Execute the developer-overridable post-render behavior
-				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent)
-
+				// Execute the developer-overridable asynchronous post-render behavior
 				this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
 
-				return fCallback(null, pContent);
+				return this.onAfterRenderAsync(fCallback, pContent);
 			});
 	}
 

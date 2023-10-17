@@ -457,10 +457,9 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                   break;
               }
 
-              // Execute the developer-overridable post-render behavior
-              _this3.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, pContent);
+              // Execute the developer-overridable asynchronous post-render behavior
               _this3.lastRenderedTimestamp = _this3.pict.log.getTimeStamp();
-              return fCallback(null, pContent);
+              return _this3.onAfterRenderAsync(fCallback, pContent);
             });
           }
         }, {

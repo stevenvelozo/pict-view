@@ -1,6 +1,6 @@
 {
     "name": "pict-view",
-    "version": "1.0.33",
+    "version": "1.0.34",
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {
@@ -24,8 +24,8 @@
     "homepage": "https://github.com/stevenvelozo/pict-view#readme",
     "devDependencies": {
         "browser-env": "^3.3.0",
-        "pict": "^1.0.133",
-        "quackage": "^1.0.22"
+        "pict": "^1.0.143",
+        "quackage": "^1.0.25"
     },
     "mocha": {
         "diff": true,

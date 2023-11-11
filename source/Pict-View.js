@@ -299,11 +299,22 @@ class PictView extends libFableServiceBase
 			return false;
 		}
 
-		let tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
-			(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
-				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
+		let tmpDataAddress;
+		let tmpData;
 
-		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+		if (typeof(pTemplateDataAddress) === 'object')
+		{
+			tmpData = pTemplateDataAddress;
+			tmpDataAddress = 'Passed in as object';
+		}
+		else
+		{
+			tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
+				(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
+					(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
+
+			tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+		}
 
 		// Execute the developer-overridable pre-render behavior
 		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
@@ -368,12 +379,22 @@ class PictView extends libFableServiceBase
 			return fCallback(Error(`Could not render ${tmpRenderableHash}`));
 		}
 
-		let tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
-			(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
-				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
+		let tmpDataAddress;
+		let tmpData;
 
-		let tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+		if (typeof(pTemplateDataAddress) === 'object')
+		{
+			tmpData = pTemplateDataAddress;
+			tmpDataAddress = 'Passed in as object';
+		}
+		else
+		{
+			tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
+				(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
+					(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
+			tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+		}
 
 		// Execute the developer-overridable pre-render behavior
 		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);

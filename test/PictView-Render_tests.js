@@ -57,6 +57,27 @@ suite
 								return fDone();
 							}
 						);
+					test(
+							'Render with a passed-in object.',
+							(fDone) =>
+							{
+								let _Pict = new libPict();
+								// Setup the environment to be log only (no browser or such)
+								let _PictEnvironment = new libPict.EnvironmentObject(_Pict);
+
+								// The example view provides a static marshal function to make our data work in test harnesses
+								viewHistoricEventsCategories.marshal_JSONData_Into_Object(dataHistoricEvents, _Pict.AppData);
+
+								// Initialize the view
+								let _PictView = _Pict.addView('HistoricEventsCategories', {}, viewHistoricEventsCategories);
+
+								// Render it manually
+								_PictView.render('HistoricalEventCategory-Row', 'TestDestination', {Name:'Custom passed-in object'});
+
+								Expect(_PictEnvironment.contentMap.TestDestination).to.equal('\n<tr>\n\t<td>Custom passed-in object</td>\n\t<td>0.00</td>\n\t<td></td>\n\t<td></td>\n</tr>');
+								return fDone();
+							}
+						);
 				}
 			);
 	}

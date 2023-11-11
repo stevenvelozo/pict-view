@@ -54,6 +54,13 @@ const defaultViewConfiguration = (
 			TemplateRecordAddress: 'AppData.EventCategoryList',
 			DestinationAddress: "#HistoricalEvents-AppContainer",
 			RenderMethod: "replace"
+		},
+		{
+			RenderableHash: "HistoricalEventCategory-Row",
+			TemplateHash: "HistoricalEventCategory-Row",
+			TemplateRecordAddress: 'AppData.EventCategoryList',
+			DestinationAddress: "#HistoricalEventCategoryListEntries",
+			RenderMethod: "append"
 		}
 	]
 });

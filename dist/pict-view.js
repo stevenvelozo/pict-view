@@ -306,7 +306,7 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           }
           return true;
         }
-        onBeforeRenderAsync(pRenderable, pRenderDestinationAddress, pData, fCallback) {
+        onBeforeRenderAsync(fCallback) {
           this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
           return fCallback();
         }
@@ -326,8 +326,15 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
             return false;
           }
-          let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-          let tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+          let tmpDataAddress;
+          let tmpData;
+          if (typeof pTemplateDataAddress === 'object') {
+            tmpData = pTemplateDataAddress;
+            tmpDataAddress = 'Passed in as object';
+          } else {
+            tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+            tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+          }
 
           // Execute the developer-overridable pre-render behavior
           this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
@@ -376,43 +383,59 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
             return fCallback(Error("Could not render ".concat(tmpRenderableHash)));
           }
-          let tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-          let tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+          let tmpDataAddress;
+          let tmpData;
+          if (typeof pTemplateDataAddress === 'object') {
+            tmpData = pTemplateDataAddress;
+            tmpDataAddress = 'Passed in as object';
+          } else {
+            tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+            tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+          }
+          let tmpAnticipate = this.fable.newAnticipate();
 
           // Execute the developer-overridable pre-render behavior
-          this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+          //this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
-          // Render the template (asynchronously)
-          this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, (pError, pContent) => {
-            if (pError) {
-              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
-              return fCallback(pError);
-            }
-
-            // Assign the content to the destination address
-            switch (tmpRenderable.RenderMethod) {
-              case 'append':
-                this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-                break;
-              case 'prepend':
-                this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
-                break;
-              case 'append_once':
-                // Try to find the content in the destination address
-                let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
-                if (tmpExistingContent.length < 1) {
-                  this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-                }
-              case 'replace':
-              default:
-                this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
-                break;
-            }
-
-            // Execute the developer-overridable asynchronous post-render behavior
-            this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
-            return this.onAfterRenderAsync(fCallback, pContent);
+          tmpAnticipate.anticipate(fOnBeforeRenderCallback => {
+            this.onBeforeRenderAsync(tmpRenderable, tmpRenderDestinationAddress, tmpData, pError => {
+              return fOnBeforeRenderCallback(pError);
+            });
           });
+          tmpAnticipate.anticipate(fAsyncTemplateCallback => {
+            // Render the template (asynchronously)
+            this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, (pError, pContent) => {
+              if (pError) {
+                this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
+                return fAsyncTemplateCallback(pError);
+              }
+
+              // Assign the content to the destination address
+              switch (tmpRenderable.RenderMethod) {
+                case 'append':
+                  this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
+                  break;
+                case 'prepend':
+                  this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
+                  break;
+                case 'append_once':
+                  // Try to find the content in the destination address
+                  let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
+                  if (tmpExistingContent.length < 1) {
+                    this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
+                  }
+                case 'replace':
+                default:
+                  this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+                  break;
+              }
+
+              // Execute the developer-overridable asynchronous post-render behavior
+              this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
+              return this.onAfterRenderAsync(fAsyncTemplateCallback, pContent);
+            });
+          });
+          tmpAnticipate.wait(fCallback);
         }
         onAfterRender() {
           if (this.pict.LogNoisiness > 3) {

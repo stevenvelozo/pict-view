@@ -265,7 +265,7 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
-	onBeforeRenderAsync(pRenderable, pRenderDestinationAddress, pData, fCallback)
+	onBeforeRenderAsync(fCallback)
 	{
 		this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
 		return fCallback();
@@ -396,46 +396,63 @@ class PictView extends libFableServiceBase
 			tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 		}
 
+		let tmpAnticipate = this.fable.newAnticipate();
+
 		// Execute the developer-overridable pre-render behavior
-		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+		//this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
-		// Render the template (asynchronously)
-		this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData,
-			(pError, pContent) =>
+		tmpAnticipate.anticipate(
+			(fOnBeforeRenderCallback) =>
 			{
-				if (pError)
-				{
-					this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderable}) because it did not parse the template.`, pError);
-					return fCallback(pError);
-				}
-
-				// Assign the content to the destination address
-				switch(tmpRenderable.RenderMethod)
-				{
-					case 'append':
-						this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-						break;
-					case 'prepend':
-						this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
-						break;
-					case 'append_once':
-						// Try to find the content in the destination address
-						let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderableHash}`);
-						if (tmpExistingContent.length < 1)
-						{
-							this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-						}
-					case 'replace':
-					default:
-						this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
-						break;
-				}
-
-				// Execute the developer-overridable asynchronous post-render behavior
-				this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
-
-				return this.onAfterRenderAsync(fCallback, pContent);
+				this.onBeforeRenderAsync(tmpRenderable, tmpRenderDestinationAddress, tmpData,
+					(pError) =>
+					{
+						return fOnBeforeRenderCallback(pError);
+					});
 			});
+
+		tmpAnticipate.anticipate(
+			(fAsyncTemplateCallback) =>
+			{
+				// Render the template (asynchronously)
+				this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData,
+					(pError, pContent) =>
+					{
+						if (pError)
+						{
+							this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderable}) because it did not parse the template.`, pError);
+							return fAsyncTemplateCallback(pError);
+						}
+
+						// Assign the content to the destination address
+						switch(tmpRenderable.RenderMethod)
+						{
+							case 'append':
+								this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
+								break;
+							case 'prepend':
+								this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
+								break;
+							case 'append_once':
+								// Try to find the content in the destination address
+								let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderableHash}`);
+								if (tmpExistingContent.length < 1)
+								{
+									this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
+								}
+							case 'replace':
+							default:
+								this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
+								break;
+						}
+
+						// Execute the developer-overridable asynchronous post-render behavior
+						this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
+
+						return this.onAfterRenderAsync(fAsyncTemplateCallback, pContent);
+					});
+			});
+		tmpAnticipate.wait(fCallback);
 	}
 
 	onAfterRender()

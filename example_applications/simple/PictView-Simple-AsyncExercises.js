@@ -63,3 +63,27 @@ class SimpleAsyncView extends libPictView
 }
 
 module.exports = SimpleAsyncView;
+
+const defaultViewConfiguration = (
+{
+	ViewIdentifier: "SimpleAsyncView",
+	DefaultRenderable: 'SimpleAsyncTest',
+	DefaultDestinationAddress: "#DummyAsyncDestination",
+
+	Templates: [
+		{
+			Hash: "SimpleAsyncTest-Container",
+			Template: /*html*/`Sugar`
+		}
+	],
+	Renderables: [
+		{
+			RenderableHash: "SimpleAsyncTest",
+			TemplateHash: "SimpleAsyncTest-Container",
+			DestinationAddress: "#DummyAsyncDestination",
+			RenderMethod: "replace"
+		}
+	]
+});
+
+module.exports.defaultViewConfiguration = defaultViewConfiguration;

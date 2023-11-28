@@ -267,7 +267,6 @@ class PictView extends libFableServiceBase
 	}
 	onBeforeRenderAsync(fCallback)
 	{
-		this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
 		return fCallback();
 	}
 

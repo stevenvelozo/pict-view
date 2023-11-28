@@ -307,7 +307,6 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           return true;
         }
         onBeforeRenderAsync(fCallback) {
-          this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
           return fCallback();
         }
         render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
@@ -395,10 +394,11 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
           let tmpAnticipate = this.fable.newAnticipate();
 
           // Execute the developer-overridable pre-render behavior
-          //this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+          //
 
           tmpAnticipate.anticipate(fOnBeforeRenderCallback => {
-            this.onBeforeRenderAsync(tmpRenderable, tmpRenderDestinationAddress, tmpData, pError => {
+            this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+            this.onBeforeRenderAsync(pError => {
               return fOnBeforeRenderCallback(pError);
             });
           });

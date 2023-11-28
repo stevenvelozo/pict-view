@@ -52,7 +52,13 @@ suite
 								let _PictView = _Pict.addView(`View-Test-Async`, SimpleAsyncView.defaultViewConfiguration, SimpleAsyncView);
 
 								let tmpBeforeValue = false;
+								let tmpBeforeNonAsyncValue = false;
 								let tmpAfterValue = false;
+
+								_PictView.onBeforeRender = () =>
+								{
+									tmpBeforeNonAsyncValue = true;
+								}
 
 								_PictView.onBeforeRenderAsync = (fCallback) =>
 								{
@@ -81,6 +87,7 @@ suite
 									{
 										Expect(tmpBeforeValue).to.be.true;
 										Expect(tmpAfterValue).to.be.true;
+										Expect(tmpBeforeNonAsyncValue).to.be.true;
 										return fDone();
 									});
 

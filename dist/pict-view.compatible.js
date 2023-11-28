@@ -350,7 +350,6 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
         }, {
           key: "onBeforeRenderAsync",
           value: function onBeforeRenderAsync(fCallback) {
-            this.onBeforeRender(pRenderable, pRenderDestinationAddress, pData);
             return fCallback();
           }
         }, {
@@ -443,10 +442,11 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             var tmpAnticipate = this.fable.newAnticipate();
 
             // Execute the developer-overridable pre-render behavior
-            //this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+            //
 
             tmpAnticipate.anticipate(function (fOnBeforeRenderCallback) {
-              _this3.onBeforeRenderAsync(tmpRenderable, tmpRenderDestinationAddress, tmpData, function (pError) {
+              _this3.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+              _this3.onBeforeRenderAsync(function (pError) {
                 return fOnBeforeRenderCallback(pError);
               });
             });

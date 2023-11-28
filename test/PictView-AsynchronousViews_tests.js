@@ -54,7 +54,7 @@ suite
 								let tmpBeforeValue = false;
 								let tmpAfterValue = false;
 
-								_PictView.onBeforeRenderAsync = (pRenderable, pRenderDestinationAddress, pData, fCallback) =>
+								_PictView.onBeforeRenderAsync = (fCallback) =>
 								{
 									tmpBeforeValue = true;
 									return fCallback();

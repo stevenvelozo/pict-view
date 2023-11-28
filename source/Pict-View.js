@@ -398,12 +398,13 @@ class PictView extends libFableServiceBase
 		let tmpAnticipate = this.fable.newAnticipate();
 
 		// Execute the developer-overridable pre-render behavior
-		//this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+		//
 
 		tmpAnticipate.anticipate(
 			(fOnBeforeRenderCallback) =>
 			{
-				this.onBeforeRenderAsync(tmpRenderable, tmpRenderDestinationAddress, tmpData,
+				this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+				this.onBeforeRenderAsync(
 					(pError) =>
 					{
 						return fOnBeforeRenderCallback(pError);

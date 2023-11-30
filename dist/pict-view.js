@@ -355,7 +355,9 @@ function _toPrimitive(input, hint) { if (typeof input !== "object" || input === 
               if (tmpExistingContent.length < 1) {
                 this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
               }
+              break;
             case 'replace':
+            // TODO: Should this be the default?
             default:
               this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
               break;

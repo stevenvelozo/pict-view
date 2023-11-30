@@ -337,7 +337,9 @@ class PictView extends libFableServiceBase
 				{
 					this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
 				}
+				break;
 			case 'replace':
+				// TODO: Should this be the default?
 			default:
 				this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
 				break;

@@ -282,6 +282,9 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
         }, {
           key: "initialize",
           value: function initialize() {
+            if (this.pict.LogControlFlow) {
+              this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize:"));
+            }
             if (!this.initializeTimestamp) {
               this.onBeforeInitialize();
               this.onInitialize();
@@ -297,6 +300,9 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           key: "initializeAsync",
           value: function initializeAsync(fCallback) {
             var _this2 = this;
+            if (this.pict.LogControlFlow) {
+              this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initializeAsync:"));
+            }
             if (!this.initializeTimestamp) {
               var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
               if (this.pict.LogNoisiness > 0) {
@@ -380,6 +386,9 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
 
             // Execute the developer-overridable pre-render behavior
             this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+            if (this.pict.LogControlFlow) {
+              this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateDataAddress[").concat(tmpDataAddress, "] render:"));
+            }
 
             // Generate the content output from the template and data
             var tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
@@ -439,8 +448,9 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
               tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
               tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
             }
-
-            // Overload this to mess with stuff before the content gets generated from the template
+            if (this.pict.LogControlFlow) {
+              this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateDataAddress[").concat(tmpDataAddress, "] renderAsync:"));
+            }
             if (this.pict.LogNoisiness > 2) {
               this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Beginning Asynchronous Render (callback-style)..."));
             }

@@ -58,6 +58,39 @@ suite
 							}
 						);
 					test(
+							'Render the list of book categories with control flow logging.',
+							(fDone) =>
+							{
+								let _Pict = new libPict();
+								_Pict.LogControlFlow = true;
+
+								// Setup the environment to be log only (no browser or such)
+								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
+
+								// The example view provides a static marshal function to make our data work in test harnesses
+								viewHistoricEventsCategories.marshal_JSONData_Into_Object(dataHistoricEvents, _Pict.AppData);
+
+								// Initialize the view
+								let _PictView = _Pict.addView('HistoricEventsCategories', {}, viewHistoricEventsCategories);
+
+								_PictView.initialize();
+
+								// Render it manually
+								_PictView.render();
+
+								Expect(_PictView).to.be.an('object');
+								console.log(JSON.stringify(_PictEnvironment.eventLog.Assign[0].Content));
+
+								Expect(_PictView.lastMarshalToViewTimestamp).to.equal(false);
+								Expect(_PictView.marshalToView()).to.equal(true);
+								Expect(_PictView.lastMarshalToViewTimestamp).to.be.a('number');
+								Expect(_PictView.solve()).to.equal(true);
+								Expect(_PictView.render()).to.equal(true);
+								Expect(_PictView.marshalFromView()).to.equal(true);
+								return fDone();
+							}
+						);
+					test(
 							'Render with a passed-in object.',
 							(fDone) =>
 							{

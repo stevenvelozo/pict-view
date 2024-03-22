@@ -191,6 +191,11 @@ class PictView extends libFableServiceBase
 
 	initialize()
 	{
+		if (this.pict.LogControlFlow)
+		{
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialize:`);
+		}
+
 		if (!this.initializeTimestamp)
 		{
 			this.onBeforeInitialize();
@@ -207,6 +212,11 @@ class PictView extends libFableServiceBase
 	}
 	initializeAsync(fCallback)
 	{
+		if (this.pict.LogControlFlow)
+		{
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initializeAsync:`);
+		}
+
 		if (!this.initializeTimestamp)
 		{
 			let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
@@ -318,6 +328,11 @@ class PictView extends libFableServiceBase
 		// Execute the developer-overridable pre-render behavior
 		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
 
+		if (this.pict.LogControlFlow)
+		{
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateDataAddress[${tmpDataAddress}] render:`);
+		}
+
 		// Generate the content output from the template and data
 		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
 
@@ -397,7 +412,10 @@ class PictView extends libFableServiceBase
 			tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 		}
 
-		// Overload this to mess with stuff before the content gets generated from the template
+		if (this.pict.LogControlFlow)
+		{
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateDataAddress[${tmpDataAddress}] renderAsync:`);
+		}
 		if (this.pict.LogNoisiness > 2)
 		{
 			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Asynchronous Render (callback-style)...`);
@@ -406,6 +424,7 @@ class PictView extends libFableServiceBase
 		{
 			this.log.trace(`At-render AppData: `, this.AppData);
 		}
+
 
 		let tmpAnticipate = this.fable.newAnticipate();
 

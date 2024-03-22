@@ -94,6 +94,51 @@ suite
 							}
 						);
 						test(
+							'Exercise onBeforeRenderAsync and onAfterRenderAsync with default render',
+							(fDone) =>
+							{
+								let _Pict = new libPict();
+								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
+								let _PictView = _Pict.addView(`View-Test-Async`, SimpleAsyncView.defaultViewConfiguration, SimpleAsyncView);
+
+								let tmpBeforeValue = false;
+								let tmpBeforeNonAsyncValue = false;
+								let tmpAfterValue = false;
+
+								_PictView.onBeforeRender = () =>
+								{
+									tmpBeforeNonAsyncValue = true;
+								}
+
+								_PictView.onBeforeRenderAsync = (fCallback) =>
+								{
+									tmpBeforeValue = true;
+									return fCallback();
+								};
+
+								_PictView.onAfterRenderAsync = (fCallback) =>
+								{
+									tmpAfterValue = true;
+									return fCallback();
+								}
+
+								let tmpAnticipate = _Pict.newAnticipate();
+
+								tmpAnticipate.anticipate(_PictView.initializeAsync.bind(_PictView));
+								tmpAnticipate.anticipate(_PictView.renderDefaultAsync.bind(_PictView));
+
+								tmpAnticipate.wait(
+									(pError) =>
+									{
+										Expect(tmpBeforeValue).to.be.true;
+										Expect(tmpAfterValue).to.be.true;
+										Expect(tmpBeforeNonAsyncValue).to.be.true;
+										return fDone();
+									});
+
+							}
+						);
+						test(
 							'Add a simple async view and try to initialize twice',
 							(fDone) =>
 							{

@@ -397,20 +397,23 @@ class PictView extends libFableServiceBase
 			tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
 		}
 
-		let tmpAnticipate = this.fable.newAnticipate();
+		// Overload this to mess with stuff before the content gets generated from the template
+		if (this.pict.LogNoisiness > 2)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Asynchronous Render (callback-style)...`);
+		}
+		if (this.pict.LogNoisiness > 4)
+		{
+			this.log.trace(`At-render AppData: `, this.AppData);
+		}
 
-		// Execute the developer-overridable pre-render behavior
-		//
+		let tmpAnticipate = this.fable.newAnticipate();
 
 		tmpAnticipate.anticipate(
 			(fOnBeforeRenderCallback) =>
 			{
 				this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
-				this.onBeforeRenderAsync(
-					(pError) =>
-					{
-						return fOnBeforeRenderCallback(pError);
-					});
+				this.onBeforeRenderAsync(fOnBeforeRenderCallback);
 			});
 
 		tmpAnticipate.anticipate(
@@ -450,14 +453,25 @@ class PictView extends libFableServiceBase
 
 						// Execute the developer-overridable asynchronous post-render behavior
 						this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
-
-						return this.onAfterRenderAsync(fAsyncTemplateCallback, pContent);
+						return fAsyncTemplateCallback();
 					});
 			});
+
+		tmpAnticipate.anticipate(
+			(fOnAfterRenderCallback) =>
+			{
+				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+				this.onAfterRenderAsync(fOnAfterRenderCallback);
+			});
+
 		tmpAnticipate.wait(fCallback);
 	}
-
-	onAfterRender()
+	renderDefaultAsync(fCallback)
+	{
+		// Render the default renderable (falses do the proper forward lookups of values from config and such)
+		this.renderAsync(false, false, false, fCallback);
+	}
+	onAfterRender(pRenderable, pRenderDestinationAddress, pData)
 	{
 		if (this.pict.LogNoisiness > 3)
 		{
@@ -467,7 +481,6 @@ class PictView extends libFableServiceBase
 	}
 	onAfterRenderAsync(fCallback)
 	{
-		this.onAfterRender();
 		return fCallback();
 	}
 

@@ -11,8 +11,6 @@ const Expect = Chai.expect;
 
 const libPict = require('pict');
 
-const libPictView = require(`../source/Pict-View.js`);
-
 const dataHistoricEvents = require(`../example_applications/historic_events_example/data/EnglishHistoricEvents-Data.json`);
 const viewHistoricEventsCategories = require(`../example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js`);
 

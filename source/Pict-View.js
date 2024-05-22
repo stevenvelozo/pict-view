@@ -334,7 +334,7 @@ class PictView extends libFableServiceBase
 		}
 
 		// Generate the content output from the template and data
-		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData)
+		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this])
 
 		// Assign the content to the destination address
 		switch(tmpRenderable.RenderMethod)
@@ -473,7 +473,7 @@ class PictView extends libFableServiceBase
 						// Execute the developer-overridable asynchronous post-render behavior
 						this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
 						return fAsyncTemplateCallback();
-					});
+					}, [this]);
 			});
 
 		tmpAnticipate.anticipate(

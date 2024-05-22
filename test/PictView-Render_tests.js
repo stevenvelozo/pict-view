@@ -106,8 +106,10 @@ suite
 
 								// Render it manually
 								_PictView.render('HistoricalEventCategory-Row', 'TestDestination', {Name:'Custom passed-in object'});
+								_PictView.render('HistoricalEventMetadata', 'TestMetadataDestination', {Name:'Custom passed-in object'});
 
 								Expect(_PictEnvironment.contentMap.TestDestination).to.equal('\n<tr>\n\t<td>Custom passed-in object</td>\n\t<td>0.00</td>\n\t<td></td>\n\t<td></td>\n</tr>');
+								Expect(_PictEnvironment.contentMap.TestMetadataDestination).to.equal('Very Historical categories');
 								return fDone();
 							}
 						);

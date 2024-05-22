@@ -391,7 +391,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             }
 
             // Generate the content output from the template and data
-            var tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData);
+            var tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this]);
 
             // Assign the content to the destination address
             switch (tmpRenderable.RenderMethod) {
@@ -493,7 +493,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                 // Execute the developer-overridable asynchronous post-render behavior
                 _this3.lastRenderedTimestamp = _this3.pict.log.getTimeStamp();
                 return fAsyncTemplateCallback();
-              });
+              }, [_this3]);
             });
             tmpAnticipate.anticipate(function (fOnAfterRenderCallback) {
               _this3.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);

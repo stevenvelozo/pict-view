@@ -45,6 +45,10 @@ const defaultViewConfiguration = (
 	<td>{~Data:Record.EventEarliestDate~}</td>
 	<td>{~Data:Record.EventLatestDate~}</td>
 </tr>`
+		},
+		{
+			Hash: "HistoricalEventCategory-Metadata",
+			Template: /*html*/`{~Data:Context[0].historicViewEntry~} categories`
 		}
 	],
 	Renderables: [
@@ -61,6 +65,12 @@ const defaultViewConfiguration = (
 			TemplateRecordAddress: 'AppData.EventCategoryList',
 			DestinationAddress: "#HistoricalEventCategoryListEntries",
 			RenderMethod: "append"
+		},
+		{
+			RenderableHash: "HistoricalEventMetadata",
+			TemplateHash: "HistoricalEventCategory-Metadata",
+			DestinationAddress: "#HistoricalEventMetadata",
+			RenderMethod: "replace"
 		}
 	]
 });
@@ -71,6 +81,8 @@ class HistoricalEventsView extends libPictView
 	constructor(pFable, pOptions, pServiceHash)
 	{
 		super(pFable, pOptions, pServiceHash);
+
+		this.historicViewEntry = 'Very Historical';
 	}
 }
 

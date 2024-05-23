@@ -341,7 +341,7 @@ class PictView extends libFableServiceBase
 
 		if (this.pict.LogNoisiness > 0)
 		{
-			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${tmpContent.length} to Destination [${tmpRenderDestinationAddress}] using render method ${tmpRenderMethod}.`);
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${tmpContent.length} to Destination [${tmpRenderDestinationAddress}] using render method [${tmpRenderable.RenderMethod}].`);
 		}
 
 		// Assign the content to the destination address
@@ -453,7 +453,7 @@ class PictView extends libFableServiceBase
 
 						if (this.pict.LogNoisiness > 0)
 						{
-							this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${pContent.length} to Destination [${tmpRenderDestinationAddress}] using Async render method ${tmpRenderMethod}.`);
+							this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${pContent.length} to Destination [${tmpRenderDestinationAddress}] using Async render method ${tmpRenderable.RenderMethod}.`);
 						}
 
 						// Assign the content to the destination address

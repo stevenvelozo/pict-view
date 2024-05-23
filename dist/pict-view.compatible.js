@@ -229,13 +229,13 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
               // Use theirs instead!
               tmpRenderable = pRenderableHash;
             } else {
-              var _tmpRenderMethod = typeof pRenderMethod !== 'string' ? pRenderMethod : 'replace';
+              var tmpRenderMethod = typeof pRenderMethod !== 'string' ? pRenderMethod : 'replace';
               tmpRenderable = {
                 RenderableHash: pRenderableHash,
                 TemplateHash: pTemplateHash,
                 DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
                 DefaultDestinationAddress: pDefaultDestinationAddress,
-                RenderMethod: _tmpRenderMethod
+                RenderMethod: tmpRenderMethod
               };
             }
             if (typeof tmpRenderable.RenderableHash != 'string' || typeof tmpRenderable.TemplateHash != 'string') {
@@ -395,7 +395,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             // Generate the content output from the template and data
             var tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this]);
             if (this.pict.LogNoisiness > 0) {
-              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(tmpContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using render method ").concat(tmpRenderMethod, "."));
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(tmpContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using render method [").concat(tmpRenderable.RenderMethod, "]."));
             }
 
             // Assign the content to the destination address
@@ -472,7 +472,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                   return fAsyncTemplateCallback(pError);
                 }
                 if (_this3.pict.LogNoisiness > 0) {
-                  _this3.log.trace("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(pContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using Async render method ").concat(tmpRenderMethod, "."));
+                  _this3.log.trace("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(pContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using Async render method ").concat(tmpRenderable.RenderMethod, "."));
                 }
 
                 // Assign the content to the destination address

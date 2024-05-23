@@ -229,13 +229,13 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
               // Use theirs instead!
               tmpRenderable = pRenderableHash;
             } else {
-              var tmpRenderMethod = typeof pRenderMethod !== 'string' ? pRenderMethod : 'replace';
+              var _tmpRenderMethod = typeof pRenderMethod !== 'string' ? pRenderMethod : 'replace';
               tmpRenderable = {
                 RenderableHash: pRenderableHash,
                 TemplateHash: pTemplateHash,
                 DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
                 DefaultDestinationAddress: pDefaultDestinationAddress,
-                RenderMethod: tmpRenderMethod
+                RenderMethod: _tmpRenderMethod
               };
             }
             if (typeof tmpRenderable.RenderableHash != 'string' || typeof tmpRenderable.TemplateHash != 'string') {
@@ -389,9 +389,14 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             if (this.pict.LogControlFlow) {
               this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateDataAddress[").concat(tmpDataAddress, "] render:"));
             }
-
+            if (this.pict.LogNoisiness > 0) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Beginning Render of Renderable[").concat(tmpRenderableHash, "] to Destination [").concat(tmpRenderDestinationAddress, "]..."));
+            }
             // Generate the content output from the template and data
             var tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this]);
+            if (this.pict.LogNoisiness > 0) {
+              this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(tmpContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using render method ").concat(tmpRenderMethod, "."));
+            }
 
             // Assign the content to the destination address
             switch (tmpRenderable.RenderMethod) {
@@ -454,9 +459,6 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             if (this.pict.LogNoisiness > 2) {
               this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Beginning Asynchronous Render (callback-style)..."));
             }
-            if (this.pict.LogNoisiness > 4) {
-              this.log.trace("At-render AppData: ", this.AppData);
-            }
             var tmpAnticipate = this.fable.newAnticipate();
             tmpAnticipate.anticipate(function (fOnBeforeRenderCallback) {
               _this3.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
@@ -468,6 +470,9 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                 if (pError) {
                   _this3.log.error("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
                   return fAsyncTemplateCallback(pError);
+                }
+                if (_this3.pict.LogNoisiness > 0) {
+                  _this3.log.trace("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(pContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using Async render method ").concat(tmpRenderMethod, "."));
                 }
 
                 // Assign the content to the destination address

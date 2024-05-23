@@ -346,9 +346,14 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           if (this.pict.LogControlFlow) {
             this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateDataAddress[").concat(tmpDataAddress, "] render:"));
           }
-
+          if (this.pict.LogNoisiness > 0) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Beginning Render of Renderable[").concat(tmpRenderableHash, "] to Destination [").concat(tmpRenderDestinationAddress, "]..."));
+          }
           // Generate the content output from the template and data
           let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this]);
+          if (this.pict.LogNoisiness > 0) {
+            this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(tmpContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using render method ").concat(tmpRenderMethod, "."));
+          }
 
           // Assign the content to the destination address
           switch (tmpRenderable.RenderMethod) {
@@ -408,9 +413,6 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           if (this.pict.LogNoisiness > 2) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Beginning Asynchronous Render (callback-style)..."));
           }
-          if (this.pict.LogNoisiness > 4) {
-            this.log.trace("At-render AppData: ", this.AppData);
-          }
           let tmpAnticipate = this.fable.newAnticipate();
           tmpAnticipate.anticipate(fOnBeforeRenderCallback => {
             this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
@@ -422,6 +424,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
               if (pError) {
                 this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
                 return fAsyncTemplateCallback(pError);
+              }
+              if (this.pict.LogNoisiness > 0) {
+                this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(pContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using Async render method ").concat(tmpRenderMethod, "."));
               }
 
               // Assign the content to the destination address

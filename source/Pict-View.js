@@ -332,9 +332,17 @@ class PictView extends libFableServiceBase
 		{
 			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateDataAddress[${tmpDataAddress}] render:`);
 		}
-
+		if (this.pict.LogNoisiness > 0)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Render of Renderable[${tmpRenderableHash}] to Destination [${tmpRenderDestinationAddress}]...`);
+		}
 		// Generate the content output from the template and data
 		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this])
+
+		if (this.pict.LogNoisiness > 0)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${tmpContent.length} to Destination [${tmpRenderDestinationAddress}] using render method ${tmpRenderMethod}.`);
+		}
 
 		// Assign the content to the destination address
 		switch(tmpRenderable.RenderMethod)
@@ -420,11 +428,6 @@ class PictView extends libFableServiceBase
 		{
 			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Asynchronous Render (callback-style)...`);
 		}
-		if (this.pict.LogNoisiness > 4)
-		{
-			this.log.trace(`At-render AppData: `, this.AppData);
-		}
-
 
 		let tmpAnticipate = this.fable.newAnticipate();
 
@@ -446,6 +449,11 @@ class PictView extends libFableServiceBase
 						{
 							this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderable}) because it did not parse the template.`, pError);
 							return fAsyncTemplateCallback(pError);
+						}
+
+						if (this.pict.LogNoisiness > 0)
+						{
+							this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${pContent.length} to Destination [${tmpRenderDestinationAddress}] using Async render method ${tmpRenderMethod}.`);
 						}
 
 						// Assign the content to the destination address

@@ -375,22 +375,42 @@ class PictView extends libFableServiceBase
 
 		return true;
 	}
-	renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
+	renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
 	{
-		let tmpRenderableHash = (typeof (pRenderable) === 'string') ? pRenderable :
+		let tmpRenderableHash = (typeof (pRenderableHash) === 'string') ? pRenderableHash :
 			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
+
+		// Allow the callback to be passed in as the last parameter no matter what
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
+							(typeof(pTemplateDataAddress) === 'function') ? pTemplateDataAddress :
+							(typeof(pRenderDestinationAddress) === 'function') ? pRenderDestinationAddress :
+							(typeof(pRenderableHash) === 'function') ? pRenderableHash :
+							false;
+
+		if (!tmpCallback)
+		{
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} renderAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
+			tmpCallback = (pError) => 
+				{
+					if (pError)
+					{
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} renderAsync Auto Callback Error: ${pError}`, pError)						
+					}
+				};
+		}
+
 		if (!tmpRenderableHash)
 		{
-			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderable}because it is not a valid renderable.`);
-			return fCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderable}because it is not a valid renderable.`));
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`);
+			return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
 		}
 
 		let tmpRenderable = this.renderables[tmpRenderableHash];
 
 		if (!tmpRenderable)
 		{
-			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it does not exist.`);
-			return fCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it does not exist.`));
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`);
+			return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`));
 		}
 
 		let tmpRenderDestinationAddress = (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
@@ -399,8 +419,8 @@ class PictView extends libFableServiceBase
 
 		if (!tmpRenderDestinationAddress)
 		{
-			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it does not have a valid destination address.`);
-			return fCallback(Error(`Could not render ${tmpRenderableHash}`));
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not have a valid destination address.`);
+			return tmpCallback(Error(`Could not render ${tmpRenderableHash}`));
 		}
 
 		let tmpDataAddress;
@@ -447,7 +467,7 @@ class PictView extends libFableServiceBase
 					{
 						if (pError)
 						{
-							this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderable}) because it did not parse the template.`, pError);
+							this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderableHash}) because it did not parse the template.`, pError);
 							return fAsyncTemplateCallback(pError);
 						}
 
@@ -491,12 +511,12 @@ class PictView extends libFableServiceBase
 				this.onAfterRenderAsync(fOnAfterRenderCallback);
 			});
 
-		tmpAnticipate.wait(fCallback);
+		tmpAnticipate.wait(tmpCallback);
 	}
 	renderDefaultAsync(fCallback)
 	{
-		// Render the default renderable (falses do the proper forward lookups of values from config and such)
-		this.renderAsync(false, false, false, fCallback);
+		// Render the default renderable
+		this.renderAsync(fCallback);
 	}
 	onAfterRender(pRenderable, pRenderDestinationAddress, pData)
 	{
@@ -559,6 +579,19 @@ class PictView extends libFableServiceBase
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : false;
+		if (!tmpCallback)
+		{
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} solveAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
+			tmpCallback = (pError) => 
+				{
+					if (pError)
+					{
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} solveAsync Auto Callback Error: ${pError}`, pError)						
+					}
+				};
+		}
+
 		tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
 		tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
 		tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
@@ -571,7 +604,7 @@ class PictView extends libFableServiceBase
 					this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
 				}
 				this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
-				return fCallback(pError);
+				return tmpCallback(pError);
 			});
 	}
 
@@ -616,6 +649,7 @@ class PictView extends libFableServiceBase
 	}
 	onMarshalFromViewAsync(fCallback)
 	{
+
 		this.onMarshalFromView();
 		return fCallback();
 	}
@@ -637,6 +671,19 @@ class PictView extends libFableServiceBase
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : false;
+		if (!tmpCallback)
+		{
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalFromViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
+			tmpCallback = (pError) => 
+				{
+					if (pError)
+					{
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalFromViewAsync Auto Callback Error: ${pError}`, pError)						
+					}
+				};
+		}
+
 		tmpAnticipate.anticipate(this.onBeforeMarshalFromViewAsync.bind(this));
 		tmpAnticipate.anticipate(this.onMarshalFromViewAsync.bind(this));
 		tmpAnticipate.anticipate(this.onAfterMarshalFromViewAsync.bind(this));
@@ -646,10 +693,10 @@ class PictView extends libFableServiceBase
 			{
 				if (this.pict.LogNoisiness > 2)
 				{
-					this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
+					this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} marshalFromViewAsync() complete.`);
 				}
 				this.lastMarshalFromViewTimestamp = this.pict.log.getTimeStamp();
-				return fCallback(pError);
+				return tmpCallback(pError);
 			});
 	}
 
@@ -715,6 +762,19 @@ class PictView extends libFableServiceBase
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
+
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : false;
+		if (!tmpCallback)
+		{
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalToViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
+			tmpCallback = (pError) => 
+				{
+					if (pError)
+					{
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalToViewAsync Auto Callback Error: ${pError}`, pError)						
+					}
+				};
+		}
 		tmpAnticipate.anticipate(this.onBeforeMarshalToViewAsync.bind(this));
 		tmpAnticipate.anticipate(this.onMarshalToViewAsync.bind(this));
 		tmpAnticipate.anticipate(this.onAfterMarshalToViewAsync.bind(this));
@@ -724,10 +784,10 @@ class PictView extends libFableServiceBase
 			{
 				if (this.pict.LogNoisiness > 2)
 				{
-					this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} solveAsync() complete.`);
+					this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} marshalToViewAsync() complete.`);
 				}
 				this.lastMarshalToViewTimestamp = this.pict.log.getTimeStamp();
-				return fCallback(pError);
+				return tmpCallback(pError);
 			});
 	}
 

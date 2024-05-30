@@ -427,22 +427,33 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           }
         }, {
           key: "renderAsync",
-          value: function renderAsync(pRenderable, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
+          value: function renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
             var _this3 = this;
-            var tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
+            var tmpRenderableHash = typeof pRenderableHash === 'string' ? pRenderableHash : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
+
+            // Allow the callback to be passed in as the last parameter no matter what
+            var tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateDataAddress === 'function' ? pTemplateDataAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : false;
+            if (!tmpCallback) {
+              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " renderAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
+              tmpCallback = function tmpCallback(pError) {
+                if (pError) {
+                  _this3.log.error("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.Name, " renderAsync Auto Callback Error: ").concat(pError), pError);
+                }
+              };
+            }
             if (!tmpRenderableHash) {
-              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, "because it is not a valid renderable."));
-              return fCallback(Error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, "because it is not a valid renderable.")));
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, "because it is not a valid renderable."));
+              return tmpCallback(Error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not asynchronously render ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, "because it is not a valid renderable.")));
             }
             var tmpRenderable = this.renderables[tmpRenderableHash];
             if (!tmpRenderable) {
-              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not exist."));
-              return fCallback(Error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not exist.")));
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, ") because it does not exist."));
+              return tmpCallback(Error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, ") because it does not exist.")));
             }
             var tmpRenderDestinationAddress = typeof pRenderDestinationAddress === 'string' ? pRenderDestinationAddress : typeof tmpRenderable.ContentDestinationAddress === 'string' ? tmpRenderable.ContentDestinationAddress : typeof this.options.DefaultDestinationAddress === 'string' ? this.options.DefaultDestinationAddress : false;
             if (!tmpRenderDestinationAddress) {
-              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
-              return fCallback(Error("Could not render ".concat(tmpRenderableHash)));
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, ") because it does not have a valid destination address."));
+              return tmpCallback(Error("Could not render ".concat(tmpRenderableHash)));
             }
             var tmpDataAddress;
             var tmpData;
@@ -468,7 +479,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
               // Render the template (asynchronously)
               _this3.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, function (pError, pContent) {
                 if (pError) {
-                  _this3.log.error("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it did not parse the template."), pError);
+                  _this3.log.error("PictView [".concat(_this3.UUID, "]::[").concat(_this3.Hash, "] ").concat(_this3.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, ") because it did not parse the template."), pError);
                   return fAsyncTemplateCallback(pError);
                 }
                 if (_this3.pict.LogNoisiness > 0) {
@@ -504,13 +515,13 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
               _this3.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
               _this3.onAfterRenderAsync(fOnAfterRenderCallback);
             });
-            tmpAnticipate.wait(fCallback);
+            tmpAnticipate.wait(tmpCallback);
           }
         }, {
           key: "renderDefaultAsync",
           value: function renderDefaultAsync(fCallback) {
-            // Render the default renderable (falses do the proper forward lookups of values from config and such)
-            this.renderAsync(false, false, false, fCallback);
+            // Render the default renderable
+            this.renderAsync(fCallback);
           }
         }, {
           key: "onAfterRender",
@@ -574,6 +585,15 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           value: function solveAsync(fCallback) {
             var _this4 = this;
             var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
+            var tmpCallback = typeof fCallback === 'function' ? fCallback : false;
+            if (!tmpCallback) {
+              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " solveAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
+              tmpCallback = function tmpCallback(pError) {
+                if (pError) {
+                  _this4.log.error("PictView [".concat(_this4.UUID, "]::[").concat(_this4.Hash, "] ").concat(_this4.options.Name, " solveAsync Auto Callback Error: ").concat(pError), pError);
+                }
+              };
+            }
             tmpAnticipate.anticipate(this.onBeforeSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
@@ -582,7 +602,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                 _this4.log.trace("PictView [".concat(_this4.UUID, "]::[").concat(_this4.Hash, "] ").concat(_this4.options.ViewIdentifier, " solveAsync() complete."));
               }
               _this4.lastSolvedTimestamp = _this4.pict.log.getTimeStamp();
-              return fCallback(pError);
+              return tmpCallback(pError);
             });
           }
         }, {
@@ -648,15 +668,24 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           value: function marshalFromViewAsync(fCallback) {
             var _this5 = this;
             var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
+            var tmpCallback = typeof fCallback === 'function' ? fCallback : false;
+            if (!tmpCallback) {
+              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " marshalFromViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
+              tmpCallback = function tmpCallback(pError) {
+                if (pError) {
+                  _this5.log.error("PictView [".concat(_this5.UUID, "]::[").concat(_this5.Hash, "] ").concat(_this5.options.Name, " marshalFromViewAsync Auto Callback Error: ").concat(pError), pError);
+                }
+              };
+            }
             tmpAnticipate.anticipate(this.onBeforeMarshalFromViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onMarshalFromViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterMarshalFromViewAsync.bind(this));
             tmpAnticipate.wait(function (pError) {
               if (_this5.pict.LogNoisiness > 2) {
-                _this5.log.trace("PictView [".concat(_this5.UUID, "]::[").concat(_this5.Hash, "] ").concat(_this5.options.ViewIdentifier, " solveAsync() complete."));
+                _this5.log.trace("PictView [".concat(_this5.UUID, "]::[").concat(_this5.Hash, "] ").concat(_this5.options.ViewIdentifier, " marshalFromViewAsync() complete."));
               }
               _this5.lastMarshalFromViewTimestamp = _this5.pict.log.getTimeStamp();
-              return fCallback(pError);
+              return tmpCallback(pError);
             });
           }
         }, {
@@ -722,15 +751,24 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           value: function marshalToViewAsync(fCallback) {
             var _this6 = this;
             var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
+            var tmpCallback = typeof fCallback === 'function' ? fCallback : false;
+            if (!tmpCallback) {
+              this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " marshalToViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
+              tmpCallback = function tmpCallback(pError) {
+                if (pError) {
+                  _this6.log.error("PictView [".concat(_this6.UUID, "]::[").concat(_this6.Hash, "] ").concat(_this6.options.Name, " marshalToViewAsync Auto Callback Error: ").concat(pError), pError);
+                }
+              };
+            }
             tmpAnticipate.anticipate(this.onBeforeMarshalToViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onMarshalToViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterMarshalToViewAsync.bind(this));
             tmpAnticipate.wait(function (pError) {
               if (_this6.pict.LogNoisiness > 2) {
-                _this6.log.trace("PictView [".concat(_this6.UUID, "]::[").concat(_this6.Hash, "] ").concat(_this6.options.ViewIdentifier, " solveAsync() complete."));
+                _this6.log.trace("PictView [".concat(_this6.UUID, "]::[").concat(_this6.Hash, "] ").concat(_this6.options.ViewIdentifier, " marshalToViewAsync() complete."));
               }
               _this6.lastMarshalToViewTimestamp = _this6.pict.log.getTimeStamp();
-              return fCallback(pError);
+              return tmpCallback(pError);
             });
           }
         }, {

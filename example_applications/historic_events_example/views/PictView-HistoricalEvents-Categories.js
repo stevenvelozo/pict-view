@@ -119,7 +119,7 @@ module.exports.marshal_JSONData_Into_Object = (pDataHistoricEventSet, pDestinati
 	for (let i = 0; i < pDataHistoricEventSet.length; i++)
 	{
 		// Each event has a category1 and category2 label
-		if (!pDestinationObject.EventCategoryMap.hasOwnProperty(pDataHistoricEventSet[i].category1))
+		if (!(pDataHistoricEventSet[i].category1 in pDestinationObject.EventCategoryMap))
 		{
 			pDestinationObject.EventCategoryMap[pDataHistoricEventSet[i].category1] = (
 				{

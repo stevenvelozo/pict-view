@@ -176,7 +176,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           // Templates are in the form of {Hash:'Some-Template-Hash',Template:'Template content',Source:'TemplateSource'}
           for (var i = 0; i < _this.options.Templates.length; i++) {
             var tmpTemplate = _this.options.Templates[i];
-            if (!tmpTemplate.hasOwnProperty('Hash') || !tmpTemplate.hasOwnProperty('Template')) {
+            if (!('Hash' in tmpTemplate) || !('Template' in tmpTemplate)) {
               _this.log.error("PictView [".concat(_this.UUID, "]::[").concat(_this.Hash, "] ").concat(_this.options.ViewIdentifier, " could not load Template ").concat(i, " in the options array."), tmpTemplate);
             } else {
               if (!tmpTemplate.Source) {
@@ -190,7 +190,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           // Templates are in the form of {Prefix:'',Postfix:'-List-Row',Template:'Template content',Source:'TemplateSourceString'}
           for (var _i = 0; _i < _this.options.DefaultTemplates.length; _i++) {
             var tmpDefaultTemplate = _this.options.DefaultTemplates[_i];
-            if (!tmpDefaultTemplate.hasOwnProperty('Postfix') || !tmpDefaultTemplate.hasOwnProperty('Template')) {
+            if (!('Postfix' in tmpDefaultTemplate) || !('Template' in tmpDefaultTemplate)) {
               _this.log.error("PictView [".concat(_this.UUID, "]::[").concat(_this.Hash, "] ").concat(_this.options.ViewIdentifier, " could not load Default Template ").concat(_i, " in the options array."), tmpDefaultTemplate);
             } else {
               if (!tmpDefaultTemplate.Source) {

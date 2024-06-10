@@ -64,7 +64,7 @@ class PictView extends libFableServiceBase
 		{
 			let tmpTemplate = this.options.Templates[i];
 
-			if (!tmpTemplate.hasOwnProperty('Hash') || !tmpTemplate.hasOwnProperty('Template'))
+			if (!('Hash' in tmpTemplate) || !('Template' in tmpTemplate))
 			{
 				this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not load Template ${i} in the options array.`, tmpTemplate);
 			}
@@ -84,7 +84,7 @@ class PictView extends libFableServiceBase
 		{
 			let tmpDefaultTemplate = this.options.DefaultTemplates[i];
 
-			if (!tmpDefaultTemplate.hasOwnProperty('Postfix') || !tmpDefaultTemplate.hasOwnProperty('Template'))
+			if (!('Postfix' in tmpDefaultTemplate) || !('Template' in tmpDefaultTemplate))
 			{
 				this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not load Default Template ${i} in the options array.`, tmpDefaultTemplate);
 			}

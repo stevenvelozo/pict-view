@@ -10,7 +10,7 @@ class SimpleSolverView extends libPictView
 	onBeforeSolve()
 	{
 		super.onBeforeSolve();
-		if (!this.pict.AppData.hasOwnProperty('ViewCount'))
+		if (!('ViewCount' in this.pict.AppData))
 		{
 			this.pict.AppData.ViewCount = 0;
 		}

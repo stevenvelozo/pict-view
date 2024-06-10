@@ -160,7 +160,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           // Templates are in the form of {Hash:'Some-Template-Hash',Template:'Template content',Source:'TemplateSource'}
           for (let i = 0; i < this.options.Templates.length; i++) {
             let tmpTemplate = this.options.Templates[i];
-            if (!tmpTemplate.hasOwnProperty('Hash') || !tmpTemplate.hasOwnProperty('Template')) {
+            if (!('Hash' in tmpTemplate) || !('Template' in tmpTemplate)) {
               this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not load Template ").concat(i, " in the options array."), tmpTemplate);
             } else {
               if (!tmpTemplate.Source) {
@@ -174,7 +174,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           // Templates are in the form of {Prefix:'',Postfix:'-List-Row',Template:'Template content',Source:'TemplateSourceString'}
           for (let i = 0; i < this.options.DefaultTemplates.length; i++) {
             let tmpDefaultTemplate = this.options.DefaultTemplates[i];
-            if (!tmpDefaultTemplate.hasOwnProperty('Postfix') || !tmpDefaultTemplate.hasOwnProperty('Template')) {
+            if (!('Postfix' in tmpDefaultTemplate) || !('Template' in tmpDefaultTemplate)) {
               this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not load Default Template ").concat(i, " in the options array."), tmpDefaultTemplate);
             } else {
               if (!tmpDefaultTemplate.Source) {

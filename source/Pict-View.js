@@ -804,6 +804,8 @@ class PictView extends libFableServiceBase
 		this.onAfterMarshalToView();
 		return fCallback();
 	}
+
+	static isPictView = true;
 }
 
 module.exports = PictView;

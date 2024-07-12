@@ -175,7 +175,7 @@ A function that enumerates the category list and calculates basic statistics.
 100    	for (let i = 0; i < pDataHistoricEventSet.length; i++)
 101    	{
 102    		// Each event has a category1 and category2 label
-103    		if (!pDestinationObject.EventCategoryMap.hasOwnProperty(pDataHistoricEventSet[i].category1))
+103    		if (!(pDataHistoricEventSet[i].category1 in pDestinationObject.EventCategoryMap))
 104    		{
 105    			pDestinationObject.EventCategoryMap[pDataHistoricEventSet[i].category1] = (
 106    				{

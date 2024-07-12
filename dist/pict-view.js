@@ -683,6 +683,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           return fCallback();
         }
       }
+      _defineProperty(PictView, "isPictView", true);
       module.exports = PictView;
     }, {
       "fable-serviceproviderbase": 1

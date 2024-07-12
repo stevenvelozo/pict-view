@@ -787,6 +787,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           }
         }]);
       }(libFableServiceBase);
+      _defineProperty(PictView, "isPictView", true);
       module.exports = PictView;
     }, {
       "fable-serviceproviderbase": 1

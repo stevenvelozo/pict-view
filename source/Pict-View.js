@@ -1,3 +1,4 @@
+
 const libFableServiceBase = require('fable-serviceproviderbase');
 
 const defaultPictViewSettings = (
@@ -35,27 +36,65 @@ const defaultPictViewSettings = (
 		Manifests: {}
 	});
 
+/** @typedef {(error?: Error) => void} ErrorCallback */
+/** @typedef {number | boolean} PictTimestamp */
+
+/**
+ * @typedef {Object} Renderable
+ *
+ * @property {string} RenderableHash - A unique hash for the renderable.
+ * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
+ * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
+ * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
+ * @property {string} [RenderMethod] - The method to use when rendering the renderable ('replace', 'append', 'prepend', 'append_once').
+ */
+
+/**
+ * Represents a view in the Pict ecosystem.
+ */
 class PictView extends libFableServiceBase
 {
+	/**
+	 * @param {any} pFable - The Fable object that this service is attached to.
+	 * @param {any} [pOptions] - (optional) The options for this service.
+	 * @param {string} [pServiceHash] - (optional) The hash of the service.
+	 */
 	constructor(pFable, pOptions, pServiceHash)
 	{
 		// Intersect default options, parent constructor, service information
 		let tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
 		super(pFable, tmpOptions, pServiceHash);
+		//FIXME: add types to fable and ancillaries
+		/** @type {any} */
+		this.fable;
+		/** @type {any} */
+		this.options;
+		/** @type {String} */
+		this.UUID;
+		/** @type {String} */
+		this.Hash;
+		/** @type {any} */
+		this.log;
 		if (!this.options.ViewIdentifier)
 		{
 			this.options.ViewIdentifier = `AutoViewID-${this.fable.getUUID()}`;
 		}
 		this.serviceType = 'PictView';
 		// Convenience and consistency naming
+		/** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
 		this.pict = this.fable;
 		// Wire in the essential Pict application state
 		this.AppData = this.pict.AppData;
 
+		/** @type {PictTimestamp} */
 		this.initializeTimestamp = false;
+		/** @type {PictTimestamp} */
 		this.lastSolvedTimestamp = false;
+		/** @type {PictTimestamp} */
 		this.lastRenderedTimestamp = false;
+		/** @type {PictTimestamp} */
 		this.lastMarshalFromViewTimestamp = false;
+		/** @type {PictTimestamp} */
 		this.lastMarshalToViewTimestamp = false;
 
 		// Load all templates from the array in the options
@@ -111,17 +150,29 @@ class PictView extends libFableServiceBase
 		// They look as such: {Identifier:'ContentEntry', TemplateHash:'Content-Entry-Section-Main', ContentDestinationAddress:'#ContentSection', RecordAddress:'AppData.Content.DefaultText', ManifestTransformation:'ManyfestHash', ManifestDestinationAddress:'AppData.Content.DataToTransformContent'}
 		// The only parts that are necessary are Identifier and Template
 		// A developer can then do render('ContentEntry') and it just kinda works.  Or they can override the ContentDestinationAddress
+		/** @type {Object<String, Renderable>} */
 		this.renderables = {};
 		for (let i = 0; i < this.options.Renderables.length; i++)
 		{
+			/** @type {Renderable} */
 			let tmpRenderable = this.options.Renderables[i];
-			this.addRenderable(this.options.Renderables[i]);
+			this.addRenderable(tmpRenderable);
 		}
 	}
 
-	addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress, pRenderMethod)
+	/**
+	 * Adds a renderable to the view.
+	 *
+	 * @param {string | Renderable} pRenderableHash - The hash of the renderable, or a renderable object.
+	 * @param {string} [pTemplateHash] - (optional) The hash of the template for the renderable.
+	 * @param {string} [pDefaultTemplateRecordAddress] - (optional) The default data address for the template.
+	 * @param {string} [pDefaultDestinationAddress] - (optional) The default destination address for the renderable.
+	 * @param {string} [pRenderMethod] - (optional) The method to use when rendering the renderable (ex. 'replace').
+	 */
+	addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateRecordAddress, pDefaultDestinationAddress, pRenderMethod)
 	{
-		let tmpRenderable = false;
+		/** @type {Renderable} */
+		let tmpRenderable;
 
 		if (typeof(pRenderableHash) == 'object')
 		{
@@ -136,8 +187,8 @@ class PictView extends libFableServiceBase
 				{
 					RenderableHash: pRenderableHash,
 					TemplateHash: pTemplateHash,
-					DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
-					DefaultDestinationAddress: pDefaultDestinationAddress,
+					DefaultTemplateRecordAddress: pDefaultTemplateRecordAddress,
+					ContentDestinationAddress: pDefaultDestinationAddress,
 					RenderMethod: tmpRenderMethod
 				});
 		}
@@ -160,6 +211,9 @@ class PictView extends libFableServiceBase
 	/* -------------------------------------------------------------------------- */
 	/*                        Code Section: Initialization                        */
 	/* -------------------------------------------------------------------------- */
+	/**
+	 * Lifecycle hook that triggers before the view is initialized.
+	 */
 	onBeforeInitialize()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -168,12 +222,21 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers before the view is initialized (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onBeforeInitializeAsync(fCallback)
 	{
 		this.onBeforeInitialize();
 		return fCallback();
 	}
 
+	/**
+	 * Lifecycle hook that triggers when the view is initialized.
+	 */
 	onInitialize()
 	{
 
@@ -183,12 +246,21 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers when the view is initialized (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onInitializeAsync(fCallback)
 	{
 		this.onInitialize();
 		return fCallback();
 	}
 
+	/**
+	 * Performs view initialization.
+	 */
 	initialize()
 	{
 		if (this.pict.LogControlFlow)
@@ -210,6 +282,12 @@ class PictView extends libFableServiceBase
 			return false;
 		}
 	}
+
+	/**
+	 * Performs view initialization (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	initializeAsync(fCallback)
 	{
 		if (this.pict.LogControlFlow)
@@ -257,6 +335,12 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers after the view is initialized (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onAfterInitializeAsync(fCallback)
 	{
 		this.onAfterInitialize();
@@ -266,7 +350,14 @@ class PictView extends libFableServiceBase
 	/* -------------------------------------------------------------------------- */
 	/*                            Code Section: Render                            */
 	/* -------------------------------------------------------------------------- */
-	onBeforeRender(pRenderable, pRenderDestinationAddress, pData)
+	/**
+	 * Lifecycle hook that triggers before the view is rendered.
+	 *
+	 * @param {any} [pRenderable] - The renderable that will be rendered.
+	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {any} [pRecord] - The record (data) that will be used to render the renderable.
+	 */
+	onBeforeRender(pRenderable, pRenderDestinationAddress, pRecord)
 	{
 		// Overload this to mess with stuff before the content gets generated from the template
 		if (this.pict.LogNoisiness > 3)
@@ -275,12 +366,25 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers before the view is rendered (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onBeforeRenderAsync(fCallback)
 	{
 		return fCallback();
 	}
 
-	render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress)
+	/**
+	 * Render a renderable from this view.
+	 *
+	 * @param {string} [pRenderable] - The hash of the renderable to render.
+	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {string} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 */
+	render(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress)
 	{
 		let tmpRenderableHash = (typeof (pRenderable) === 'string') ? pRenderable :
 			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
@@ -308,36 +412,36 @@ class PictView extends libFableServiceBase
 			return false;
 		}
 
-		let tmpDataAddress;
-		let tmpData;
+		let tmpRecordAddress;
+		let tmpRecord;
 
-		if (typeof(pTemplateDataAddress) === 'object')
+		if (typeof(pTemplateRecordAddress) === 'object')
 		{
-			tmpData = pTemplateDataAddress;
-			tmpDataAddress = 'Passed in as object';
+			tmpRecord = pTemplateRecordAddress;
+			tmpRecordAddress = 'Passed in as object';
 		}
 		else
 		{
-			tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
+			tmpRecordAddress = (typeof (pTemplateRecordAddress) === 'string') ? pTemplateRecordAddress :
 				(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
 					(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
-			tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+			tmpRecord = (typeof (tmpRecordAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
 		}
 
 		// Execute the developer-overridable pre-render behavior
-		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord);
 
 		if (this.pict.LogControlFlow)
 		{
-			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateDataAddress[${tmpDataAddress}] render:`);
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateRecordAddress[${tmpRecordAddress}] render:`);
 		}
 		if (this.pict.LogNoisiness > 0)
 		{
 			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Render of Renderable[${tmpRenderableHash}] to Destination [${tmpRenderDestinationAddress}]...`);
 		}
 		// Generate the content output from the template and data
-		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this])
+		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this])
 
 		if (this.pict.LogNoisiness > 0)
 		{
@@ -369,20 +473,29 @@ class PictView extends libFableServiceBase
 		}
 
 		// Execute the developer-overridable post-render behavior
-		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent)
+		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent)
 
 		this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
 
 		return true;
 	}
-	renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateDataAddress, fCallback)
+
+	/**
+	 * Render a renderable from this view.
+	 *
+	 * @param {string | ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+	 * @param {string | ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {string | ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+	 */
+	renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
 	{
 		let tmpRenderableHash = (typeof (pRenderableHash) === 'string') ? pRenderableHash :
 			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
 
 		// Allow the callback to be passed in as the last parameter no matter what
 		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
-							(typeof(pTemplateDataAddress) === 'function') ? pTemplateDataAddress :
+							(typeof(pTemplateRecordAddress) === 'function') ? pTemplateRecordAddress :
 							(typeof(pRenderDestinationAddress) === 'function') ? pRenderDestinationAddress :
 							(typeof(pRenderableHash) === 'function') ? pRenderableHash :
 							false;
@@ -423,26 +536,26 @@ class PictView extends libFableServiceBase
 			return tmpCallback(Error(`Could not render ${tmpRenderableHash}`));
 		}
 
-		let tmpDataAddress;
-		let tmpData;
+		let tmpRecordAddress;
+		let tmpRecord;
 
-		if (typeof(pTemplateDataAddress) === 'object')
+		if (typeof(pTemplateRecordAddress) === 'object')
 		{
-			tmpData = pTemplateDataAddress;
-			tmpDataAddress = 'Passed in as object';
+			tmpRecord = pTemplateRecordAddress;
+			tmpRecordAddress = 'Passed in as object';
 		}
 		else
 		{
-			tmpDataAddress = (typeof (pTemplateDataAddress) === 'string') ? pTemplateDataAddress :
+			tmpRecordAddress = (typeof (pTemplateRecordAddress) === 'string') ? pTemplateRecordAddress :
 				(typeof (tmpRenderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderable.DefaultTemplateRecordAddress :
 					(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
 
-			tmpData = (typeof (tmpDataAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+			tmpRecord = (typeof (tmpRecordAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
 		}
 
 		if (this.pict.LogControlFlow)
 		{
-			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateDataAddress[${tmpDataAddress}] renderAsync:`);
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateRecordAddress[${tmpRecordAddress}] renderAsync:`);
 		}
 		if (this.pict.LogNoisiness > 2)
 		{
@@ -454,15 +567,16 @@ class PictView extends libFableServiceBase
 		tmpAnticipate.anticipate(
 			(fOnBeforeRenderCallback) =>
 			{
-				this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+				this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord);
 				this.onBeforeRenderAsync(fOnBeforeRenderCallback);
 			});
 
+		let tmpContent;
 		tmpAnticipate.anticipate(
 			(fAsyncTemplateCallback) =>
 			{
 				// Render the template (asynchronously)
-				this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData,
+				this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord,
 					(pError, pContent) =>
 					{
 						if (pError)
@@ -470,6 +584,7 @@ class PictView extends libFableServiceBase
 							this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderableHash}) because it did not parse the template.`, pError);
 							return fAsyncTemplateCallback(pError);
 						}
+						tmpContent = pContent;
 
 						if (this.pict.LogNoisiness > 0)
 						{
@@ -507,18 +622,33 @@ class PictView extends libFableServiceBase
 		tmpAnticipate.anticipate(
 			(fOnAfterRenderCallback) =>
 			{
-				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
 				this.onAfterRenderAsync(fOnAfterRenderCallback);
 			});
 
 		tmpAnticipate.wait(tmpCallback);
 	}
+
+	/**
+	 * Renders the default renderable.
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	renderDefaultAsync(fCallback)
 	{
 		// Render the default renderable
 		this.renderAsync(fCallback);
 	}
-	onAfterRender(pRenderable, pRenderDestinationAddress, pData)
+
+	/**
+	 * Lifecycle hook that triggers after the view is rendered.
+	 *
+	 * @param {any} [pRenderable] - The renderable that was rendered.
+	 * @param {string} [pRenderDestinationAddress] - The address where the renderable was rendered.
+	 * @param {any} [pRecord] - The record (data) that was used by the renderable.
+	 * @param {string} [pContent] - The content that was rendered.
+	 */
+	onAfterRender(pRenderable, pRenderDestinationAddress, pRecord, pContent)
 	{
 		if (this.pict.LogNoisiness > 3)
 		{
@@ -526,6 +656,12 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers after the view is rendered (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onAfterRenderAsync(fCallback)
 	{
 		return fCallback();
@@ -534,6 +670,9 @@ class PictView extends libFableServiceBase
 	/* -------------------------------------------------------------------------- */
 	/*                            Code Section: Solver                            */
 	/* -------------------------------------------------------------------------- */
+	/**
+	 * Lifecycle hook that triggers before the view is solved.
+	 */
 	onBeforeSolve()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -542,12 +681,21 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers before the view is solved (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onBeforeSolveAsync(fCallback)
 	{
 		this.onBeforeSolve();
 		return fCallback();
 	}
 
+	/**
+	 * Lifecycle hook that triggers when the view is solved.
+	 */
 	onSolve()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -556,12 +704,23 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers when the view is solved (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onSolveAsync(fCallback)
 	{
 		this.onSolve();
 		return fCallback();
 	}
 
+	/**
+	 * Performs view solving and triggers lifecycle hooks.
+	 *
+	 * @return {boolean} - True if the view was solved successfully, false otherwise.
+	 */
 	solve()
 	{
 		if (this.pict.LogNoisiness > 2)
@@ -575,6 +734,11 @@ class PictView extends libFableServiceBase
 		return true;
 	}
 
+	/**
+	 * Performs view solving and triggers lifecycle hooks (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	solveAsync(fCallback)
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
@@ -608,6 +772,9 @@ class PictView extends libFableServiceBase
 			});
 	}
 
+	/**
+	 * Lifecycle hook that triggers after the view is solved.
+	 */
 	onAfterSolve()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -616,6 +783,12 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers after the view is solved (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onAfterSolveAsync(fCallback)
 	{
 		this.onAfterSolve();
@@ -625,6 +798,11 @@ class PictView extends libFableServiceBase
 	/* -------------------------------------------------------------------------- */
 	/*                     Code Section: Marshal From View                        */
 	/* -------------------------------------------------------------------------- */
+	/**
+	 * Lifecycle hook that triggers before data is marshaled from the view.
+	 *
+	 * @return {boolean} - True if the operation was successful, false otherwise.
+	 */
 	onBeforeMarshalFromView()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -633,12 +811,21 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers before data is marshaled from the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onBeforeMarshalFromViewAsync(fCallback)
 	{
 		this.onBeforeMarshalFromView();
 		return fCallback();
 	}
 
+	/**
+	 * Lifecycle hook that triggers when data is marshaled from the view.
+	 */
 	onMarshalFromView()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -647,6 +834,12 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers when data is marshaled from the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onMarshalFromViewAsync(fCallback)
 	{
 
@@ -654,6 +847,11 @@ class PictView extends libFableServiceBase
 		return fCallback();
 	}
 
+	/**
+	 * Marshals data from the view.
+	 *
+	 * @return {boolean} - True if the operation was successful, false otherwise.
+	 */
 	marshalFromView()
 	{
 		if (this.pict.LogNoisiness > 2)
@@ -667,6 +865,11 @@ class PictView extends libFableServiceBase
 		return true;
 	}
 
+	/**
+	 * Marshals data from the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	marshalFromViewAsync(fCallback)
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
@@ -700,6 +903,9 @@ class PictView extends libFableServiceBase
 			});
 	}
 
+	/**
+	 * Lifecycle hook that triggers after data is marshaled from the view.
+	 */
 	onAfterMarshalFromView()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -708,6 +914,12 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers after data is marshaled from the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onAfterMarshalFromViewAsync(fCallback)
 	{
 		this.onAfterMarshalFromView();
@@ -717,6 +929,9 @@ class PictView extends libFableServiceBase
 	/* -------------------------------------------------------------------------- */
 	/*                     Code Section: Marshal To View                          */
 	/* -------------------------------------------------------------------------- */
+	/**
+	 * Lifecycle hook that triggers before data is marshaled into the view.
+	 */
 	onBeforeMarshalToView()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -725,12 +940,21 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers before data is marshaled into the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onBeforeMarshalToViewAsync(fCallback)
 	{
 		this.onBeforeMarshalToView();
 		return fCallback();
 	}
 
+	/**
+	 * Lifecycle hook that triggers when data is marshaled into the view.
+	 */
 	onMarshalToView()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -739,12 +963,23 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers when data is marshaled into the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onMarshalToViewAsync(fCallback)
 	{
 		this.onMarshalToView();
 		return fCallback();
 	}
 
+	/**
+	 * Marshals data into the view.
+	 *
+	 * @return {boolean} - True if the operation was successful, false otherwise.
+	 */
 	marshalToView()
 	{
 		if (this.pict.LogNoisiness > 2)
@@ -758,6 +993,11 @@ class PictView extends libFableServiceBase
 		return true;
 	}
 
+	/**
+	 * Marshals data into the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	marshalToViewAsync(fCallback)
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
@@ -791,6 +1031,9 @@ class PictView extends libFableServiceBase
 			});
 	}
 
+	/**
+	 * Lifecycle hook that triggers after data is marshaled into the view.
+	 */
 	onAfterMarshalToView()
 	{
 		if (this.pict.LogNoisiness > 3)
@@ -799,12 +1042,19 @@ class PictView extends libFableServiceBase
 		}
 		return true;
 	}
+
+	/**
+	 * Lifecycle hook that triggers after data is marshaled into the view (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 */
 	onAfterMarshalToViewAsync(fCallback)
 	{
 		this.onAfterMarshalToView();
 		return fCallback();
 	}
 
+	/** @return {boolean} - True if the object is a PictView. */
 	get isPictView()
 	{
 		return true;

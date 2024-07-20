@@ -1,6 +1,6 @@
 {
     "name": "pict-view",
-    "version": "1.0.49",
+    "version": "1.0.50",
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {
@@ -10,8 +10,10 @@
         "build": "npx quack build",
         "docker-dev-build": "docker build ./ -f Dockerfile_LUXURYCode -t pict-view-image:local",
         "docker-dev-run": "docker run -it -d --name pict-view-dev -p 30001:8080 -p 38086:8086 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/pict-view\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" pict-view-image:local",
-        "docker-dev-shell": "docker exec -it pict-view-dev /bin/bash"
+        "docker-dev-shell": "docker exec -it pict-view-dev /bin/bash",
+        "types": "npx -p typescript tsc -p . --outDir types"
     },
+    "types": "types/Pict-View.d.ts",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/stevenvelozo/pict-view.git"
@@ -25,7 +27,8 @@
     "devDependencies": {
         "browser-env": "^3.3.0",
         "pict": "^1.0.204",
-        "quackage": "^1.0.30"
+        "quackage": "^1.0.30",
+        "typescript": "^5.5.3"
     },
     "mocha": {
         "diff": true,
@@ -46,6 +49,7 @@
         ]
     },
     "dependencies": {
+        "fable": "^3.0.143",
         "fable-serviceproviderbase": "^3.0.13"
     }
 }

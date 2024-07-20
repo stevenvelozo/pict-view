@@ -1,6 +1,6 @@
 "use strict";
 
-function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 (function (f) {
@@ -137,23 +137,63 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         Renderables: [],
         Manifests: {}
       };
+
+      /** @typedef {(error?: Error) => void} ErrorCallback */
+      /** @typedef {number | boolean} PictTimestamp */
+
+      /**
+       * @typedef {Object} Renderable
+       *
+       * @property {string} RenderableHash - A unique hash for the renderable.
+       * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
+       * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
+       * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
+       * @property {string} [RenderMethod] - The method to use when rendering the renderable ('replace', 'append', 'prepend', 'append_once').
+       */
+
+      /**
+       * Represents a view in the Pict ecosystem.
+       */
       class PictView extends libFableServiceBase {
+        /**
+         * @param {any} pFable - The Fable object that this service is attached to.
+         * @param {any} [pOptions] - (optional) The options for this service.
+         * @param {string} [pServiceHash] - (optional) The hash of the service.
+         */
         constructor(pFable, pOptions, pServiceHash) {
           // Intersect default options, parent constructor, service information
           let tmpOptions = Object.assign({}, JSON.parse(JSON.stringify(defaultPictViewSettings)), pOptions);
           super(pFable, tmpOptions, pServiceHash);
+          //FIXME: add types to fable and ancillaries
+          /** @type {any} */
+          this.fable;
+          /** @type {any} */
+          this.options;
+          /** @type {String} */
+          this.UUID;
+          /** @type {String} */
+          this.Hash;
+          /** @type {any} */
+          this.log;
           if (!this.options.ViewIdentifier) {
             this.options.ViewIdentifier = "AutoViewID-".concat(this.fable.getUUID());
           }
           this.serviceType = 'PictView';
           // Convenience and consistency naming
+          /** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
           this.pict = this.fable;
           // Wire in the essential Pict application state
           this.AppData = this.pict.AppData;
+
+          /** @type {PictTimestamp} */
           this.initializeTimestamp = false;
+          /** @type {PictTimestamp} */
           this.lastSolvedTimestamp = false;
+          /** @type {PictTimestamp} */
           this.lastRenderedTimestamp = false;
+          /** @type {PictTimestamp} */
           this.lastMarshalFromViewTimestamp = false;
+          /** @type {PictTimestamp} */
           this.lastMarshalToViewTimestamp = false;
 
           // Load all templates from the array in the options
@@ -196,14 +236,27 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           // They look as such: {Identifier:'ContentEntry', TemplateHash:'Content-Entry-Section-Main', ContentDestinationAddress:'#ContentSection', RecordAddress:'AppData.Content.DefaultText', ManifestTransformation:'ManyfestHash', ManifestDestinationAddress:'AppData.Content.DataToTransformContent'}
           // The only parts that are necessary are Identifier and Template
           // A developer can then do render('ContentEntry') and it just kinda works.  Or they can override the ContentDestinationAddress
+          /** @type {Object<String, Renderable>} */
           this.renderables = {};
           for (let i = 0; i < this.options.Renderables.length; i++) {
+            /** @type {Renderable} */
             let tmpRenderable = this.options.Renderables[i];
-            this.addRenderable(this.options.Renderables[i]);
+            this.addRenderable(tmpRenderable);
           }
         }
-        addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateDataAddress, pDefaultDestinationAddress, pRenderMethod) {
-          let tmpRenderable = false;
+
+        /**
+         * Adds a renderable to the view.
+         *
+         * @param {string | Renderable} pRenderableHash - The hash of the renderable, or a renderable object.
+         * @param {string} [pTemplateHash] - (optional) The hash of the template for the renderable.
+         * @param {string} [pDefaultTemplateRecordAddress] - (optional) The default data address for the template.
+         * @param {string} [pDefaultDestinationAddress] - (optional) The default destination address for the renderable.
+         * @param {string} [pRenderMethod] - (optional) The method to use when rendering the renderable (ex. 'replace').
+         */
+        addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateRecordAddress, pDefaultDestinationAddress, pRenderMethod) {
+          /** @type {Renderable} */
+          let tmpRenderable;
           if (typeof pRenderableHash == 'object') {
             // The developer passed in the renderable as an object.
             // Use theirs instead!
@@ -213,8 +266,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             tmpRenderable = {
               RenderableHash: pRenderableHash,
               TemplateHash: pTemplateHash,
-              DefaultTemplateDataAddress: pDefaultTemplateDataAddress,
-              DefaultDestinationAddress: pDefaultDestinationAddress,
+              DefaultTemplateRecordAddress: pDefaultTemplateRecordAddress,
+              ContentDestinationAddress: pDefaultDestinationAddress,
               RenderMethod: tmpRenderMethod
             };
           }
@@ -231,26 +284,49 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         /* -------------------------------------------------------------------------- */
         /*                        Code Section: Initialization                        */
         /* -------------------------------------------------------------------------- */
+        /**
+         * Lifecycle hook that triggers before the view is initialized.
+         */
         onBeforeInitialize() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeInitialize:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers before the view is initialized (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onBeforeInitializeAsync(fCallback) {
           this.onBeforeInitialize();
           return fCallback();
         }
+
+        /**
+         * Lifecycle hook that triggers when the view is initialized.
+         */
         onInitialize() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onInitialize:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers when the view is initialized (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onInitializeAsync(fCallback) {
           this.onInitialize();
           return fCallback();
         }
+
+        /**
+         * Performs view initialization.
+         */
         initialize() {
           if (this.pict.LogControlFlow) {
             this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initialize:"));
@@ -266,6 +342,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             return false;
           }
         }
+
+        /**
+         * Performs view initialization (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         initializeAsync(fCallback) {
           if (this.pict.LogControlFlow) {
             this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " initializeAsync:"));
@@ -297,6 +379,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers after the view is initialized (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onAfterInitializeAsync(fCallback) {
           this.onAfterInitialize();
           return fCallback();
@@ -305,17 +393,38 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         /* -------------------------------------------------------------------------- */
         /*                            Code Section: Render                            */
         /* -------------------------------------------------------------------------- */
-        onBeforeRender(pRenderable, pRenderDestinationAddress, pData) {
+        /**
+         * Lifecycle hook that triggers before the view is rendered.
+         *
+         * @param {any} [pRenderable] - The renderable that will be rendered.
+         * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {any} [pRecord] - The record (data) that will be used to render the renderable.
+         */
+        onBeforeRender(pRenderable, pRenderDestinationAddress, pRecord) {
           // Overload this to mess with stuff before the content gets generated from the template
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeRender:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers before the view is rendered (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onBeforeRenderAsync(fCallback) {
           return fCallback();
         }
-        render(pRenderable, pRenderDestinationAddress, pTemplateDataAddress) {
+
+        /**
+         * Render a renderable from this view.
+         *
+         * @param {string} [pRenderable] - The hash of the renderable to render.
+         * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string} [pTemplateRecordAddress] - The address where the data for the template is stored.
+         */
+        render(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
           if (!tmpRenderableHash) {
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it is not a valid renderable."));
@@ -331,26 +440,26 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderable, ") because it does not have a valid destination address."));
             return false;
           }
-          let tmpDataAddress;
-          let tmpData;
-          if (typeof pTemplateDataAddress === 'object') {
-            tmpData = pTemplateDataAddress;
-            tmpDataAddress = 'Passed in as object';
+          let tmpRecordAddress;
+          let tmpRecord;
+          if (typeof pTemplateRecordAddress === 'object') {
+            tmpRecord = pTemplateRecordAddress;
+            tmpRecordAddress = 'Passed in as object';
           } else {
-            tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-            tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+            tmpRecordAddress = typeof pTemplateRecordAddress === 'string' ? pTemplateRecordAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+            tmpRecord = typeof tmpRecordAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
           }
 
           // Execute the developer-overridable pre-render behavior
-          this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+          this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord);
           if (this.pict.LogControlFlow) {
-            this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateDataAddress[").concat(tmpDataAddress, "] render:"));
+            this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateRecordAddress[").concat(tmpRecordAddress, "] render:"));
           }
           if (this.pict.LogNoisiness > 0) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Beginning Render of Renderable[").concat(tmpRenderableHash, "] to Destination [").concat(tmpRenderDestinationAddress, "]..."));
           }
           // Generate the content output from the template and data
-          let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, null, [this]);
+          let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this]);
           if (this.pict.LogNoisiness > 0) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(tmpContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using render method [").concat(tmpRenderable.RenderMethod, "]."));
           }
@@ -378,15 +487,24 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           }
 
           // Execute the developer-overridable post-render behavior
-          this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData, tmpContent);
+          this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
           this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
           return true;
         }
-        renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateDataAddress, fCallback) {
+
+        /**
+         * Render a renderable from this view.
+         *
+         * @param {string | ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string | ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string | ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+         * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+         */
+        renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
           let tmpRenderableHash = typeof pRenderableHash === 'string' ? pRenderableHash : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
 
           // Allow the callback to be passed in as the last parameter no matter what
-          let tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateDataAddress === 'function' ? pTemplateDataAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : false;
+          let tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : false;
           if (!tmpCallback) {
             this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " renderAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
             tmpCallback = pError => {
@@ -409,33 +527,35 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, ") because it does not have a valid destination address."));
             return tmpCallback(Error("Could not render ".concat(tmpRenderableHash)));
           }
-          let tmpDataAddress;
-          let tmpData;
-          if (typeof pTemplateDataAddress === 'object') {
-            tmpData = pTemplateDataAddress;
-            tmpDataAddress = 'Passed in as object';
+          let tmpRecordAddress;
+          let tmpRecord;
+          if (typeof pTemplateRecordAddress === 'object') {
+            tmpRecord = pTemplateRecordAddress;
+            tmpRecordAddress = 'Passed in as object';
           } else {
-            tmpDataAddress = typeof pTemplateDataAddress === 'string' ? pTemplateDataAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-            tmpData = typeof tmpDataAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpDataAddress) : undefined;
+            tmpRecordAddress = typeof pTemplateRecordAddress === 'string' ? pTemplateRecordAddress : typeof tmpRenderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+            tmpRecord = typeof tmpRecordAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
           }
           if (this.pict.LogControlFlow) {
-            this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateDataAddress[").concat(tmpDataAddress, "] renderAsync:"));
+            this.log.trace("PICT-ControlFlow VIEW [".concat(this.UUID, "]::[").concat(this.Hash, "] Renderable[").concat(tmpRenderableHash, "] Destination[").concat(tmpRenderDestinationAddress, "] TemplateRecordAddress[").concat(tmpRecordAddress, "] renderAsync:"));
           }
           if (this.pict.LogNoisiness > 2) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Beginning Asynchronous Render (callback-style)..."));
           }
           let tmpAnticipate = this.fable.newAnticipate();
           tmpAnticipate.anticipate(fOnBeforeRenderCallback => {
-            this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+            this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord);
             this.onBeforeRenderAsync(fOnBeforeRenderCallback);
           });
+          let tmpContent;
           tmpAnticipate.anticipate(fAsyncTemplateCallback => {
             // Render the template (asynchronously)
-            this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpData, (pError, pContent) => {
+            this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, (pError, pContent) => {
               if (pError) {
                 this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderableHash, " (param ").concat(pRenderableHash, ") because it did not parse the template."), pError);
                 return fAsyncTemplateCallback(pError);
               }
+              tmpContent = pContent;
               if (this.pict.LogNoisiness > 0) {
                 this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " Assigning Renderable[").concat(tmpRenderableHash, "] content length ").concat(pContent.length, " to Destination [").concat(tmpRenderDestinationAddress, "] using Async render method ").concat(tmpRenderable.RenderMethod, "."));
               }
@@ -466,21 +586,42 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             }, [this]);
           });
           tmpAnticipate.anticipate(fOnAfterRenderCallback => {
-            this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpData);
+            this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
             this.onAfterRenderAsync(fOnAfterRenderCallback);
           });
           tmpAnticipate.wait(tmpCallback);
         }
+
+        /**
+         * Renders the default renderable.
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         renderDefaultAsync(fCallback) {
           // Render the default renderable
           this.renderAsync(fCallback);
         }
-        onAfterRender(pRenderable, pRenderDestinationAddress, pData) {
+
+        /**
+         * Lifecycle hook that triggers after the view is rendered.
+         *
+         * @param {any} [pRenderable] - The renderable that was rendered.
+         * @param {string} [pRenderDestinationAddress] - The address where the renderable was rendered.
+         * @param {any} [pRecord] - The record (data) that was used by the renderable.
+         * @param {string} [pContent] - The content that was rendered.
+         */
+        onAfterRender(pRenderable, pRenderDestinationAddress, pRecord, pContent) {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterRender:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers after the view is rendered (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onAfterRenderAsync(fCallback) {
           return fCallback();
         }
@@ -488,26 +629,51 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         /* -------------------------------------------------------------------------- */
         /*                            Code Section: Solver                            */
         /* -------------------------------------------------------------------------- */
+        /**
+         * Lifecycle hook that triggers before the view is solved.
+         */
         onBeforeSolve() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeSolve:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers before the view is solved (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onBeforeSolveAsync(fCallback) {
           this.onBeforeSolve();
           return fCallback();
         }
+
+        /**
+         * Lifecycle hook that triggers when the view is solved.
+         */
         onSolve() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onSolve:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers when the view is solved (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onSolveAsync(fCallback) {
           this.onSolve();
           return fCallback();
         }
+
+        /**
+         * Performs view solving and triggers lifecycle hooks.
+         *
+         * @return {boolean} - True if the view was solved successfully, false otherwise.
+         */
         solve() {
           if (this.pict.LogNoisiness > 2) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
@@ -518,6 +684,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           this.lastSolvedTimestamp = this.pict.log.getTimeStamp();
           return true;
         }
+
+        /**
+         * Performs view solving and triggers lifecycle hooks (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         solveAsync(fCallback) {
           let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
           let tmpCallback = typeof fCallback === 'function' ? fCallback : false;
@@ -540,12 +712,22 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             return tmpCallback(pError);
           });
         }
+
+        /**
+         * Lifecycle hook that triggers after the view is solved.
+         */
         onAfterSolve() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterSolve:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers after the view is solved (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onAfterSolveAsync(fCallback) {
           this.onAfterSolve();
           return fCallback();
@@ -554,26 +736,53 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         /* -------------------------------------------------------------------------- */
         /*                     Code Section: Marshal From View                        */
         /* -------------------------------------------------------------------------- */
+        /**
+         * Lifecycle hook that triggers before data is marshaled from the view.
+         *
+         * @return {boolean} - True if the operation was successful, false otherwise.
+         */
         onBeforeMarshalFromView() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeMarshalFromView:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers before data is marshaled from the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onBeforeMarshalFromViewAsync(fCallback) {
           this.onBeforeMarshalFromView();
           return fCallback();
         }
+
+        /**
+         * Lifecycle hook that triggers when data is marshaled from the view.
+         */
         onMarshalFromView() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onMarshalFromView:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers when data is marshaled from the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onMarshalFromViewAsync(fCallback) {
           this.onMarshalFromView();
           return fCallback();
         }
+
+        /**
+         * Marshals data from the view.
+         *
+         * @return {boolean} - True if the operation was successful, false otherwise.
+         */
         marshalFromView() {
           if (this.pict.LogNoisiness > 2) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
@@ -584,6 +793,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           this.lastMarshalFromViewTimestamp = this.pict.log.getTimeStamp();
           return true;
         }
+
+        /**
+         * Marshals data from the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         marshalFromViewAsync(fCallback) {
           let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
           let tmpCallback = typeof fCallback === 'function' ? fCallback : false;
@@ -606,12 +821,22 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             return tmpCallback(pError);
           });
         }
+
+        /**
+         * Lifecycle hook that triggers after data is marshaled from the view.
+         */
         onAfterMarshalFromView() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterMarshalFromView:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers after data is marshaled from the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onAfterMarshalFromViewAsync(fCallback) {
           this.onAfterMarshalFromView();
           return fCallback();
@@ -620,26 +845,51 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         /* -------------------------------------------------------------------------- */
         /*                     Code Section: Marshal To View                          */
         /* -------------------------------------------------------------------------- */
+        /**
+         * Lifecycle hook that triggers before data is marshaled into the view.
+         */
         onBeforeMarshalToView() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onBeforeMarshalToView:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers before data is marshaled into the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onBeforeMarshalToViewAsync(fCallback) {
           this.onBeforeMarshalToView();
           return fCallback();
         }
+
+        /**
+         * Lifecycle hook that triggers when data is marshaled into the view.
+         */
         onMarshalToView() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onMarshalToView:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers when data is marshaled into the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onMarshalToViewAsync(fCallback) {
           this.onMarshalToView();
           return fCallback();
         }
+
+        /**
+         * Marshals data into the view.
+         *
+         * @return {boolean} - True if the operation was successful, false otherwise.
+         */
         marshalToView() {
           if (this.pict.LogNoisiness > 2) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " executing solve() function..."));
@@ -650,6 +900,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           this.lastMarshalToViewTimestamp = this.pict.log.getTimeStamp();
           return true;
         }
+
+        /**
+         * Marshals data into the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         marshalToViewAsync(fCallback) {
           let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
           let tmpCallback = typeof fCallback === 'function' ? fCallback : false;
@@ -672,16 +928,28 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
             return tmpCallback(pError);
           });
         }
+
+        /**
+         * Lifecycle hook that triggers after data is marshaled into the view.
+         */
         onAfterMarshalToView() {
           if (this.pict.LogNoisiness > 3) {
             this.log.trace("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " onAfterMarshalToView:"));
           }
           return true;
         }
+
+        /**
+         * Lifecycle hook that triggers after data is marshaled into the view (async flow).
+         *
+         * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+         */
         onAfterMarshalToViewAsync(fCallback) {
           this.onAfterMarshalToView();
           return fCallback();
         }
+
+        /** @return {boolean} - True if the object is a PictView. */
         get isPictView() {
           return true;
         }

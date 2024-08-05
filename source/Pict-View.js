@@ -378,6 +378,95 @@ class PictView extends libFableServiceBase
 	}
 
 	/**
+	 * Builds the render options for a renderable.
+	 * 
+	 * For DRY purposes on the three flavors of render.
+	 * 
+	 * @param {string} [pRenderableHash] - The hash of the renderable to render.
+	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+	 */
+	buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress)
+	{
+		let tmpRenderOptions = {Valid: true};
+		tmpRenderOptions.RenderableHash = (typeof (pRenderableHash) === 'string') ? pRenderableHash :
+								(typeof (this.options.DefaultRenderable) == 'string') ?
+								this.options.DefaultRenderable : false;
+		if (!tmpRenderOptions.RenderableHash)
+		{
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not find a suitable RenderableHash ${tmpRenderOptions.RenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`);
+			tmpRenderOptions.Valid = false;
+		}
+
+		tmpRenderOptions.Renderable = this.renderables[tmpRenderOptions.RenderableHash];
+		if (!tmpRenderOptions.Renderable)
+		{
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderOptions.RenderableHash} (param ${pRenderableHash}) because it does not exist.`);
+			tmpRenderOptions.Valid = false;
+		}
+
+		tmpRenderOptions.DestinationAddress = (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
+			(typeof (tmpRenderOptions.Renderable.ContentDestinationAddress) === 'string') ? tmpRenderOptions.Renderable.ContentDestinationAddress :
+				(typeof (this.options.DefaultDestinationAddress) === 'string') ? this.options.DefaultDestinationAddress : false;
+		if (!tmpRenderOptions.DestinationAddress)
+		{
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderOptions.RenderableHash} (param ${pRenderableHash}) because it does not have a valid destination address (param ${pRenderDestinationAddress}).`);
+			tmpRenderOptions.Valid = false;
+		}
+
+		if (typeof(pTemplateRecordAddress) === 'object')
+		{
+			tmpRenderOptions.RecordAddress = 'Passed in as object';
+			tmpRenderOptions.Record = pTemplateRecordAddress;
+		}
+		else
+		{
+			tmpRenderOptions.RecordAddress = (typeof (pTemplateRecordAddress) === 'string') ? pTemplateRecordAddress :
+				(typeof (tmpRenderOptions.Renderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderOptions.Renderable.DefaultTemplateRecordAddress :
+				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
+			tmpRenderOptions.Record = (typeof (tmpRecordAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
+		}
+
+		return tmpRenderOptions;
+	}
+
+	/**
+	 * Assigns the content to the destination address.
+	 * 
+	 * For DRY purposes on the three flavors of render.
+	 * 
+	 * @param {Renderable} pRenderable - The renderable to render.
+	 * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
+	 * @param {string} pContent - The content to render.
+	 * @returns {boolean} - Returns true if the content was assigned successfully.
+	 * @memberof PictView
+	 */
+	assignRenderContent(pRenderable, pRenderDestinationAddress, pContent)
+	{
+		// Assign the content to the destination address
+		switch(pRenderable.RenderMethod)
+		{
+			case 'append':
+				return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
+			case 'prepend':
+				return this.pict.ContentAssignment.prependContent(pRenderDestinationAddress, pContent);
+			case 'append_once':
+				// Try to find the content in the destination address
+				let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${pRenderable.DestinationAddress}`);
+				if (tmpExistingContent.length < 1)
+				{
+					return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
+				}
+				break;
+			case 'replace':
+				// TODO: Should this be the default?
+			default:
+				return this.pict.ContentAssignment.assignContent(pRenderDestinationAddress, pContent);
+		}
+		return false;
+	}
+
+	/**
 	 * Render a renderable from this view.
 	 *
 	 * @param {string} [pRenderable] - The hash of the renderable to render.
@@ -459,7 +548,7 @@ class PictView extends libFableServiceBase
 				break;
 			case 'append_once':
 				// Try to find the content in the destination address
-				let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderableHash}`);
+				let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderable.DestinationAddress}`);
 				if (tmpExistingContent.length < 1)
 				{
 					this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
@@ -602,7 +691,7 @@ class PictView extends libFableServiceBase
 								break;
 							case 'append_once':
 								// Try to find the content in the destination address
-								let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderableHash}`);
+								let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderable.DestinationAddress}`);
 								if (tmpExistingContent.length < 1)
 								{
 									this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
@@ -638,6 +727,54 @@ class PictView extends libFableServiceBase
 	{
 		// Render the default renderable
 		this.renderAsync(fCallback);
+	}
+
+	basicRender(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress)
+	{
+		let tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+		if (tmpRenderOptions.Valid)
+		{
+			this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this]));
+			return true;
+		}
+		else
+		{
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not perform a basic render of ${tmpRenderOptions.RenderableHash} because it is not valid.`);
+			return false;
+		}
+	}
+
+	basicRenderAsync(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
+	{
+		// Allow the callback to be passed in as the last parameter no matter what
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
+							(typeof(pTemplateRecordAddress) === 'function') ? pTemplateRecordAddress :
+							(typeof(pRenderDestinationAddress) === 'function') ? pRenderDestinationAddress :
+							(typeof(pRenderable) === 'function') ? pRenderable :
+							false;
+
+		let tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+		if (tmpRenderOptions.Valid)
+		{
+			this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record,
+				(pError, pContent) =>
+				{
+					if (pError)
+					{
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderOptions.RenderableHash} because it did not parse the template.`, pError);
+						return tmpCallback(pError);
+					}
+
+					this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, pContent);
+					return tmpCallback();
+				}, [this])
+		}
+		else
+		{
+			let tmpErrorMessage = `PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not perform a basic render of ${tmpRenderOptions.RenderableHash} because it is not valid.`;
+			this.log.error(tmpErrorMessage);
+			return tmpCallback(tmpErrorMessage);
+		}
 	}
 
 	/**

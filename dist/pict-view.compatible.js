@@ -1,16 +1,16 @@
 "use strict";
 
 function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
-function _possibleConstructorReturn(t, e) { if (e && ("object" == _typeof(e) || "function" == typeof e)) return e; if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined"); return _assertThisInitialized(t); }
-function _assertThisInitialized(e) { if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); return e; }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
-function _getPrototypeOf(t) { return _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) { return t.__proto__ || Object.getPrototypeOf(t); }, _getPrototypeOf(t); }
-function _inherits(t, e) { if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function"); t.prototype = Object.create(e && e.prototype, { constructor: { value: t, writable: !0, configurable: !0 } }), Object.defineProperty(t, "prototype", { writable: !1 }), e && _setPrototypeOf(t, e); }
-function _setPrototypeOf(t, e) { return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) { return t.__proto__ = e, t; }, _setPrototypeOf(t, e); }
-function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
-function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
@@ -459,6 +459,81 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           }
 
           /**
+           * Builds the render options for a renderable.
+           * 
+           * For DRY purposes on the three flavors of render.
+           * 
+           * @param {string} [pRenderableHash] - The hash of the renderable to render.
+           * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+           * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+           */
+        }, {
+          key: "buildRenderOptions",
+          value: function buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress) {
+            var tmpRenderOptions = {
+              Valid: true
+            };
+            tmpRenderOptions.RenderableHash = typeof pRenderableHash === 'string' ? pRenderableHash : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
+            if (!tmpRenderOptions.RenderableHash) {
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not find a suitable RenderableHash ").concat(tmpRenderOptions.RenderableHash, " (param ").concat(pRenderableHash, "because it is not a valid renderable."));
+              tmpRenderOptions.Valid = false;
+            }
+            tmpRenderOptions.Renderable = this.renderables[tmpRenderOptions.RenderableHash];
+            if (!tmpRenderOptions.Renderable) {
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderOptions.RenderableHash, " (param ").concat(pRenderableHash, ") because it does not exist."));
+              tmpRenderOptions.Valid = false;
+            }
+            tmpRenderOptions.DestinationAddress = typeof pRenderDestinationAddress === 'string' ? pRenderDestinationAddress : typeof tmpRenderOptions.Renderable.ContentDestinationAddress === 'string' ? tmpRenderOptions.Renderable.ContentDestinationAddress : typeof this.options.DefaultDestinationAddress === 'string' ? this.options.DefaultDestinationAddress : false;
+            if (!tmpRenderOptions.DestinationAddress) {
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not render ").concat(tmpRenderOptions.RenderableHash, " (param ").concat(pRenderableHash, ") because it does not have a valid destination address (param ").concat(pRenderDestinationAddress, ")."));
+              tmpRenderOptions.Valid = false;
+            }
+            if (_typeof(pTemplateRecordAddress) === 'object') {
+              tmpRenderOptions.RecordAddress = 'Passed in as object';
+              tmpRenderOptions.Record = pTemplateRecordAddress;
+            } else {
+              tmpRenderOptions.RecordAddress = typeof pTemplateRecordAddress === 'string' ? pTemplateRecordAddress : typeof tmpRenderOptions.Renderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderOptions.Renderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
+              tmpRenderOptions.Record = typeof tmpRecordAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
+            }
+            return tmpRenderOptions;
+          }
+
+          /**
+           * Assigns the content to the destination address.
+           * 
+           * For DRY purposes on the three flavors of render.
+           * 
+           * @param {Renderable} pRenderable - The renderable to render.
+           * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
+           * @param {string} pContent - The content to render.
+           * @returns {boolean} - Returns true if the content was assigned successfully.
+           * @memberof PictView
+           */
+        }, {
+          key: "assignRenderContent",
+          value: function assignRenderContent(pRenderable, pRenderDestinationAddress, pContent) {
+            // Assign the content to the destination address
+            switch (pRenderable.RenderMethod) {
+              case 'append':
+                return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
+              case 'prepend':
+                return this.pict.ContentAssignment.prependContent(pRenderDestinationAddress, pContent);
+              case 'append_once':
+                // Try to find the content in the destination address
+                var tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(pRenderable.DestinationAddress));
+                if (tmpExistingContent.length < 1) {
+                  return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
+                }
+                break;
+              case 'replace':
+              // TODO: Should this be the default?
+              default:
+                return this.pict.ContentAssignment.assignContent(pRenderDestinationAddress, pContent);
+            }
+            return false;
+          }
+
+          /**
            * Render a renderable from this view.
            *
            * @param {string} [pRenderable] - The hash of the renderable to render.
@@ -517,7 +592,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                 break;
               case 'append_once':
                 // Try to find the content in the destination address
-                var tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
+                var tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderable.DestinationAddress));
                 if (tmpExistingContent.length < 1) {
                   this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
                 }
@@ -616,7 +691,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                     break;
                   case 'append_once':
                     // Try to find the content in the destination address
-                    var tmpExistingContent = _this3.pict.ContentAssignment.getElement("#".concat(tmpRenderableHash));
+                    var tmpExistingContent = _this3.pict.ContentAssignment.getElement("#".concat(tmpRenderable.DestinationAddress));
                     if (tmpExistingContent.length < 1) {
                       _this3.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
                     }
@@ -648,6 +723,40 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
           value: function renderDefaultAsync(fCallback) {
             // Render the default renderable
             this.renderAsync(fCallback);
+          }
+        }, {
+          key: "basicRender",
+          value: function basicRender(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress) {
+            var tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+            if (tmpRenderOptions.Valid) {
+              this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this]));
+              return true;
+            } else {
+              this.log.error("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not perform a basic render of ").concat(tmpRenderOptions.RenderableHash, " because it is not valid."));
+              return false;
+            }
+          }
+        }, {
+          key: "basicRenderAsync",
+          value: function basicRenderAsync(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
+            var _this4 = this;
+            // Allow the callback to be passed in as the last parameter no matter what
+            var tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderable === 'function' ? pRenderable : false;
+            var tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+            if (tmpRenderOptions.Valid) {
+              this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, function (pError, pContent) {
+                if (pError) {
+                  _this4.log.error("PictView [".concat(_this4.UUID, "]::[").concat(_this4.Hash, "] ").concat(_this4.options.ViewIdentifier, " could not render (asynchronously) ").concat(tmpRenderOptions.RenderableHash, " because it did not parse the template."), pError);
+                  return tmpCallback(pError);
+                }
+                _this4.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, pContent);
+                return tmpCallback();
+              }, [this]);
+            } else {
+              var tmpErrorMessage = "PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.ViewIdentifier, " could not perform a basic render of ").concat(tmpRenderOptions.RenderableHash, " because it is not valid.");
+              this.log.error(tmpErrorMessage);
+              return tmpCallback(tmpErrorMessage);
+            }
           }
 
           /**
@@ -755,14 +864,14 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
         }, {
           key: "solveAsync",
           value: function solveAsync(fCallback) {
-            var _this4 = this;
+            var _this5 = this;
             var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
             var tmpCallback = typeof fCallback === 'function' ? fCallback : false;
             if (!tmpCallback) {
               this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " solveAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
               tmpCallback = function tmpCallback(pError) {
                 if (pError) {
-                  _this4.log.error("PictView [".concat(_this4.UUID, "]::[").concat(_this4.Hash, "] ").concat(_this4.options.Name, " solveAsync Auto Callback Error: ").concat(pError), pError);
+                  _this5.log.error("PictView [".concat(_this5.UUID, "]::[").concat(_this5.Hash, "] ").concat(_this5.options.Name, " solveAsync Auto Callback Error: ").concat(pError), pError);
                 }
               };
             }
@@ -770,10 +879,10 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             tmpAnticipate.anticipate(this.onSolveAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterSolveAsync.bind(this));
             tmpAnticipate.wait(function (pError) {
-              if (_this4.pict.LogNoisiness > 2) {
-                _this4.log.trace("PictView [".concat(_this4.UUID, "]::[").concat(_this4.Hash, "] ").concat(_this4.options.ViewIdentifier, " solveAsync() complete."));
+              if (_this5.pict.LogNoisiness > 2) {
+                _this5.log.trace("PictView [".concat(_this5.UUID, "]::[").concat(_this5.Hash, "] ").concat(_this5.options.ViewIdentifier, " solveAsync() complete."));
               }
-              _this4.lastSolvedTimestamp = _this4.pict.log.getTimeStamp();
+              _this5.lastSolvedTimestamp = _this5.pict.log.getTimeStamp();
               return tmpCallback(pError);
             });
           }
@@ -881,14 +990,14 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
         }, {
           key: "marshalFromViewAsync",
           value: function marshalFromViewAsync(fCallback) {
-            var _this5 = this;
+            var _this6 = this;
             var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
             var tmpCallback = typeof fCallback === 'function' ? fCallback : false;
             if (!tmpCallback) {
               this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " marshalFromViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
               tmpCallback = function tmpCallback(pError) {
                 if (pError) {
-                  _this5.log.error("PictView [".concat(_this5.UUID, "]::[").concat(_this5.Hash, "] ").concat(_this5.options.Name, " marshalFromViewAsync Auto Callback Error: ").concat(pError), pError);
+                  _this6.log.error("PictView [".concat(_this6.UUID, "]::[").concat(_this6.Hash, "] ").concat(_this6.options.Name, " marshalFromViewAsync Auto Callback Error: ").concat(pError), pError);
                 }
               };
             }
@@ -896,10 +1005,10 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             tmpAnticipate.anticipate(this.onMarshalFromViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterMarshalFromViewAsync.bind(this));
             tmpAnticipate.wait(function (pError) {
-              if (_this5.pict.LogNoisiness > 2) {
-                _this5.log.trace("PictView [".concat(_this5.UUID, "]::[").concat(_this5.Hash, "] ").concat(_this5.options.ViewIdentifier, " marshalFromViewAsync() complete."));
+              if (_this6.pict.LogNoisiness > 2) {
+                _this6.log.trace("PictView [".concat(_this6.UUID, "]::[").concat(_this6.Hash, "] ").concat(_this6.options.ViewIdentifier, " marshalFromViewAsync() complete."));
               }
-              _this5.lastMarshalFromViewTimestamp = _this5.pict.log.getTimeStamp();
+              _this6.lastMarshalFromViewTimestamp = _this6.pict.log.getTimeStamp();
               return tmpCallback(pError);
             });
           }
@@ -1005,14 +1114,14 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
         }, {
           key: "marshalToViewAsync",
           value: function marshalToViewAsync(fCallback) {
-            var _this6 = this;
+            var _this7 = this;
             var tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
             var tmpCallback = typeof fCallback === 'function' ? fCallback : false;
             if (!tmpCallback) {
               this.log.warn("PictView [".concat(this.UUID, "]::[").concat(this.Hash, "] ").concat(this.options.Name, " marshalToViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions."));
               tmpCallback = function tmpCallback(pError) {
                 if (pError) {
-                  _this6.log.error("PictView [".concat(_this6.UUID, "]::[").concat(_this6.Hash, "] ").concat(_this6.options.Name, " marshalToViewAsync Auto Callback Error: ").concat(pError), pError);
+                  _this7.log.error("PictView [".concat(_this7.UUID, "]::[").concat(_this7.Hash, "] ").concat(_this7.options.Name, " marshalToViewAsync Auto Callback Error: ").concat(pError), pError);
                 }
               };
             }
@@ -1020,10 +1129,10 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
             tmpAnticipate.anticipate(this.onMarshalToViewAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterMarshalToViewAsync.bind(this));
             tmpAnticipate.wait(function (pError) {
-              if (_this6.pict.LogNoisiness > 2) {
-                _this6.log.trace("PictView [".concat(_this6.UUID, "]::[").concat(_this6.Hash, "] ").concat(_this6.options.ViewIdentifier, " marshalToViewAsync() complete."));
+              if (_this7.pict.LogNoisiness > 2) {
+                _this7.log.trace("PictView [".concat(_this7.UUID, "]::[").concat(_this7.Hash, "] ").concat(_this7.options.ViewIdentifier, " marshalToViewAsync() complete."));
               }
-              _this6.lastMarshalToViewTimestamp = _this6.pict.log.getTimeStamp();
+              _this7.lastMarshalToViewTimestamp = _this7.pict.log.getTimeStamp();
               return tmpCallback(pError);
             });
           }

@@ -592,7 +592,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                 break;
               case 'append_once':
                 // Try to find the content in the destination address
-                var tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderable.DestinationAddress));
+                var tmpExistingContent = this.pict.ContentAssignment.getElement("".concat(tmpRenderable.DestinationAddress));
                 if (tmpExistingContent.length < 1) {
                   this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
                 }
@@ -691,7 +691,7 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
                     break;
                   case 'append_once':
                     // Try to find the content in the destination address
-                    var tmpExistingContent = _this3.pict.ContentAssignment.getElement("#".concat(tmpRenderable.DestinationAddress));
+                    var tmpExistingContent = _this3.pict.ContentAssignment.getElement("".concat(tmpRenderable.DestinationAddress));
                     if (tmpExistingContent.length < 1) {
                       _this3.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
                     }

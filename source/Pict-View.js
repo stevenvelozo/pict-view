@@ -548,7 +548,7 @@ class PictView extends libFableServiceBase
 				break;
 			case 'append_once':
 				// Try to find the content in the destination address
-				let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderable.DestinationAddress}`);
+				let tmpExistingContent = this.pict.ContentAssignment.getElement(`${tmpRenderable.DestinationAddress}`);
 				if (tmpExistingContent.length < 1)
 				{
 					this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
@@ -691,7 +691,7 @@ class PictView extends libFableServiceBase
 								break;
 							case 'append_once':
 								// Try to find the content in the destination address
-								let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${tmpRenderable.DestinationAddress}`);
+								let tmpExistingContent = this.pict.ContentAssignment.getElement(`${tmpRenderable.DestinationAddress}`);
 								if (tmpExistingContent.length < 1)
 								{
 									this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);

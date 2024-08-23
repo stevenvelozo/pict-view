@@ -545,7 +545,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
               break;
             case 'append_once':
               // Try to find the content in the destination address
-              let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderable.DestinationAddress));
+              let tmpExistingContent = this.pict.ContentAssignment.getElement("".concat(tmpRenderable.DestinationAddress));
               if (tmpExistingContent.length < 1) {
                 this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
               }
@@ -641,7 +641,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
                   break;
                 case 'append_once':
                   // Try to find the content in the destination address
-                  let tmpExistingContent = this.pict.ContentAssignment.getElement("#".concat(tmpRenderable.DestinationAddress));
+                  let tmpExistingContent = this.pict.ContentAssignment.getElement("".concat(tmpRenderable.DestinationAddress));
                   if (tmpExistingContent.length < 1) {
                     this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
                   }

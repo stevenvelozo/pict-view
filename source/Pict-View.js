@@ -1,6 +1,8 @@
 
 const libFableServiceBase = require('fable-serviceproviderbase');
 
+const libPackage = require('../package.json');
+
 const defaultPictViewSettings = (
 	{
 		DefaultRenderable: false,
@@ -81,7 +83,7 @@ class PictView extends libFableServiceBase
 		}
 		this.serviceType = 'PictView';
 		/** @type {Object} */
-		this._Package = require('../package.json');
+		this._Package = libPackage;
 		// Convenience and consistency naming
 		/** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
 		this.pict = this.fable;

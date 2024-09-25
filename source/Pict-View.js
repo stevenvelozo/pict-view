@@ -80,6 +80,8 @@ class PictView extends libFableServiceBase
 			this.options.ViewIdentifier = `AutoViewID-${this.fable.getUUID()}`;
 		}
 		this.serviceType = 'PictView';
+		/** @type {Object} */
+		this._Package = require('../package.json');
 		// Convenience and consistency naming
 		/** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
 		this.pict = this.fable;

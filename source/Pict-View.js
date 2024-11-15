@@ -48,7 +48,7 @@ const defaultPictViewSettings = (
  * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
  * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
  * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
- * @property {string} [RenderMethod] - The method to use when rendering the renderable ('replace', 'append', 'prepend', 'append_once').
+ * @property {string} [RenderMethod] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
  */
 
 /**
@@ -447,27 +447,7 @@ class PictView extends libFableServiceBase
 	 */
 	assignRenderContent(pRenderable, pRenderDestinationAddress, pContent)
 	{
-		// Assign the content to the destination address
-		switch(pRenderable.RenderMethod)
-		{
-			case 'append':
-				return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
-			case 'prepend':
-				return this.pict.ContentAssignment.prependContent(pRenderDestinationAddress, pContent);
-			case 'append_once':
-				// Try to find the content in the destination address
-				let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${pRenderable.DestinationAddress}`);
-				if (tmpExistingContent.length < 1)
-				{
-					return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
-				}
-				break;
-			case 'replace':
-				// TODO: Should this be the default?
-			default:
-				return this.pict.ContentAssignment.assignContent(pRenderDestinationAddress, pContent);
-		}
-		return false;
+		return this.pict.ContentAssignment.projectContent(pRenderable.RenderMethod, pRenderDestinationAddress, pContent, pRenderable.TestAddress);
 	}
 
 	/**
@@ -542,28 +522,7 @@ class PictView extends libFableServiceBase
 		}
 
 		// Assign the content to the destination address
-		switch(tmpRenderable.RenderMethod)
-		{
-			case 'append':
-				this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
-				break;
-			case 'prepend':
-				this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
-				break;
-			case 'append_once':
-				// Try to find the content in the destination address
-				let tmpExistingContent = this.pict.ContentAssignment.getElement(`${tmpRenderable.DestinationAddress}`);
-				if (tmpExistingContent.length < 1)
-				{
-					this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
-				}
-				break;
-			case 'replace':
-				// TODO: Should this be the default?
-			default:
-				this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
-				break;
-		}
+		this.pict.ContentAssignment.projectContent(tmpRenderable.RenderMethod, tmpRenderDestinationAddress, tmpContent, tmpRenderable.TestAddress);
 
 		// Execute the developer-overridable post-render behavior
 		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent)
@@ -684,27 +643,7 @@ class PictView extends libFableServiceBase
 							this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${pContent.length} to Destination [${tmpRenderDestinationAddress}] using Async render method ${tmpRenderable.RenderMethod}.`);
 						}
 
-						// Assign the content to the destination address
-						switch(tmpRenderable.RenderMethod)
-						{
-							case 'append':
-								this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-								break;
-							case 'prepend':
-								this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
-								break;
-							case 'append_once':
-								// Try to find the content in the destination address
-								let tmpExistingContent = this.pict.ContentAssignment.getElement(`${tmpRenderable.DestinationAddress}`);
-								if (tmpExistingContent.length < 1)
-								{
-									this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-								}
-							case 'replace':
-							default:
-								this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
-								break;
-						}
+						this.pict.ContentAssignment.projectContent(tmpRenderable.RenderMethod, tmpRenderDestinationAddress, pContent, tmpRenderable.TestAddress);
 
 						// Execute the developer-overridable asynchronous post-render behavior
 						this.lastRenderedTimestamp = this.pict.log.getTimeStamp();

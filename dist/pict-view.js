@@ -159,7 +159,7 @@
     3: [function (require, module, exports) {
       module.exports = {
         "name": "pict-view",
-        "version": "1.0.54",
+        "version": "1.0.56",
         "description": "Pict View Base Class",
         "main": "source/Pict-View.js",
         "scripts": {
@@ -185,9 +185,9 @@
         "homepage": "https://github.com/stevenvelozo/pict-view#readme",
         "devDependencies": {
           "browser-env": "^3.3.0",
-          "pict": "^1.0.215",
-          "quackage": "^1.0.33",
-          "typescript": "^5.6.2"
+          "pict": "^1.0.226",
+          "quackage": "^1.0.36",
+          "typescript": "^5.7.2"
         },
         "mocha": {
           "diff": true,
@@ -201,7 +201,7 @@
           "watch-ignore": ["lib/vendor"]
         },
         "dependencies": {
-          "fable": "^3.0.145",
+          "fable": "^3.0.146",
           "fable-serviceproviderbase": "^3.0.15"
         }
       };
@@ -244,7 +244,7 @@
        * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
        * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
        * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
-       * @property {string} [RenderMethod] - The method to use when rendering the renderable ('replace', 'append', 'prepend', 'append_once').
+       * @property {string} [RenderMethod] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
        */
 
       /**
@@ -565,25 +565,7 @@
          * @memberof PictView
          */
         assignRenderContent(pRenderable, pRenderDestinationAddress, pContent) {
-          // Assign the content to the destination address
-          switch (pRenderable.RenderMethod) {
-            case 'append':
-              return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
-            case 'prepend':
-              return this.pict.ContentAssignment.prependContent(pRenderDestinationAddress, pContent);
-            case 'append_once':
-              // Try to find the content in the destination address
-              let tmpExistingContent = this.pict.ContentAssignment.getElement(`#${pRenderable.DestinationAddress}`);
-              if (tmpExistingContent.length < 1) {
-                return this.pict.ContentAssignment.appendContent(pRenderDestinationAddress, pContent);
-              }
-              break;
-            case 'replace':
-            // TODO: Should this be the default?
-            default:
-              return this.pict.ContentAssignment.assignContent(pRenderDestinationAddress, pContent);
-          }
-          return false;
+          return this.pict.ContentAssignment.projectContent(pRenderable.RenderMethod, pRenderDestinationAddress, pContent, pRenderable.TestAddress);
         }
 
         /**
@@ -634,26 +616,7 @@
           }
 
           // Assign the content to the destination address
-          switch (tmpRenderable.RenderMethod) {
-            case 'append':
-              this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
-              break;
-            case 'prepend':
-              this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, tmpContent);
-              break;
-            case 'append_once':
-              // Try to find the content in the destination address
-              let tmpExistingContent = this.pict.ContentAssignment.getElement(`${tmpRenderable.DestinationAddress}`);
-              if (tmpExistingContent.length < 1) {
-                this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, tmpContent);
-              }
-              break;
-            case 'replace':
-            // TODO: Should this be the default?
-            default:
-              this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, tmpContent);
-              break;
-          }
+          this.pict.ContentAssignment.projectContent(tmpRenderable.RenderMethod, tmpRenderDestinationAddress, tmpContent, tmpRenderable.TestAddress);
 
           // Execute the developer-overridable post-render behavior
           this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
@@ -728,26 +691,7 @@
               if (this.pict.LogNoisiness > 0) {
                 this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${pContent.length} to Destination [${tmpRenderDestinationAddress}] using Async render method ${tmpRenderable.RenderMethod}.`);
               }
-
-              // Assign the content to the destination address
-              switch (tmpRenderable.RenderMethod) {
-                case 'append':
-                  this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-                  break;
-                case 'prepend':
-                  this.pict.ContentAssignment.prependContent(tmpRenderDestinationAddress, pContent);
-                  break;
-                case 'append_once':
-                  // Try to find the content in the destination address
-                  let tmpExistingContent = this.pict.ContentAssignment.getElement(`${tmpRenderable.DestinationAddress}`);
-                  if (tmpExistingContent.length < 1) {
-                    this.pict.ContentAssignment.appendContent(tmpRenderDestinationAddress, pContent);
-                  }
-                case 'replace':
-                default:
-                  this.pict.ContentAssignment.assignContent(tmpRenderDestinationAddress, pContent);
-                  break;
-              }
+              this.pict.ContentAssignment.projectContent(tmpRenderable.RenderMethod, tmpRenderDestinationAddress, pContent, tmpRenderable.TestAddress);
 
               // Execute the developer-overridable asynchronous post-render behavior
               this.lastRenderedTimestamp = this.pict.log.getTimeStamp();

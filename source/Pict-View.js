@@ -42,13 +42,17 @@ const defaultPictViewSettings = (
 /** @typedef {number | boolean} PictTimestamp */
 
 /**
+ * @typedef {'replace' | 'append' | 'prepend' | 'append_once'} RenderMethod
+ */
+/**
  * @typedef {Object} Renderable
  *
  * @property {string} RenderableHash - A unique hash for the renderable.
  * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
  * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
  * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
- * @property {string} [RenderMethod] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
+ * @property {RenderMethod} [RenderMethod=replace] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
+ * @property {string} [TestAddress] - The address to use for testing the renderable.
  */
 
 /**
@@ -77,6 +81,7 @@ class PictView extends libFableServiceBase
 		this.Hash;
 		/** @type {any} */
 		this.log;
+
 		if (!this.options.ViewIdentifier)
 		{
 			this.options.ViewIdentifier = `AutoViewID-${this.fable.getUUID()}`;
@@ -171,7 +176,7 @@ class PictView extends libFableServiceBase
 	 * @param {string} [pTemplateHash] - (optional) The hash of the template for the renderable.
 	 * @param {string} [pDefaultTemplateRecordAddress] - (optional) The default data address for the template.
 	 * @param {string} [pDefaultDestinationAddress] - (optional) The default destination address for the renderable.
-	 * @param {string} [pRenderMethod] - (optional) The method to use when rendering the renderable (ex. 'replace').
+	 * @param {RenderMethod} [pRenderMethod=replace] - (optional) The method to use when rendering the renderable (ex. 'replace').
 	 */
 	addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateRecordAddress, pDefaultDestinationAddress, pRenderMethod)
 	{
@@ -186,6 +191,7 @@ class PictView extends libFableServiceBase
 		}
 		else
 		{
+			/** @type {RenderMethod} */
 			let tmpRenderMethod = (typeof(pRenderMethod) !== 'string') ? pRenderMethod : 'replace';
 			tmpRenderable = (
 				{
@@ -313,15 +319,20 @@ class PictView extends libFableServiceBase
 			tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
 
 			tmpAnticipate.wait(
+				/** @param {Error} pError */
 				(pError) =>
 				{
+					if (pError)
+					{
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization failed: ${pError.message || pError}`, { stack: pError.stack });
+					}
 					this.initializeTimestamp = this.pict.log.getTimeStamp();
 					if (this.pict.LogNoisiness > 0)
 					{
 						this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
 					}
 					return fCallback();
-				})
+				});
 		}
 		else
 		{
@@ -357,9 +368,9 @@ class PictView extends libFableServiceBase
 	/**
 	 * Lifecycle hook that triggers before the view is rendered.
 	 *
-	 * @param {any} [pRenderable] - The renderable that will be rendered.
-	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-	 * @param {any} [pRecord] - The record (data) that will be used to render the renderable.
+	 * @param {Renderable} pRenderable - The renderable that will be rendered.
+	 * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
+	 * @param {any} pRecord - The record (data) that will be used to render the renderable.
 	 */
 	onBeforeRender(pRenderable, pRenderDestinationAddress, pRecord)
 	{
@@ -383,12 +394,12 @@ class PictView extends libFableServiceBase
 
 	/**
 	 * Builds the render options for a renderable.
-	 * 
+	 *
 	 * For DRY purposes on the three flavors of render.
-	 * 
-	 * @param {string} [pRenderableHash] - The hash of the renderable to render.
-	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-	 * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+	 *
+	 * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+	 * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
 	 */
 	buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress)
 	{
@@ -428,7 +439,7 @@ class PictView extends libFableServiceBase
 			tmpRenderOptions.RecordAddress = (typeof (pTemplateRecordAddress) === 'string') ? pTemplateRecordAddress :
 				(typeof (tmpRenderOptions.Renderable.DefaultTemplateRecordAddress) === 'string') ? tmpRenderOptions.Renderable.DefaultTemplateRecordAddress :
 				(typeof (this.options.DefaultTemplateRecordAddress) === 'string') ? this.options.DefaultTemplateRecordAddress : false;
-			tmpRenderOptions.Record = (typeof (tmpRecordAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
+			tmpRenderOptions.Record = (typeof (tmpRenderOptions.RecordAddress) === 'string') ? this.pict.DataProvider.getDataByAddress(tmpRenderOptions.RecordAddress) : undefined;
 		}
 
 		return tmpRenderOptions;
@@ -436,9 +447,9 @@ class PictView extends libFableServiceBase
 
 	/**
 	 * Assigns the content to the destination address.
-	 * 
+	 *
 	 * For DRY purposes on the three flavors of render.
-	 * 
+	 *
 	 * @param {Renderable} pRenderable - The renderable to render.
 	 * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
 	 * @param {string} pContent - The content to render.
@@ -455,7 +466,8 @@ class PictView extends libFableServiceBase
 	 *
 	 * @param {string} [pRenderable] - The hash of the renderable to render.
 	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-	 * @param {string} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @return {boolean}
 	 */
 	render(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress)
 	{
@@ -514,7 +526,7 @@ class PictView extends libFableServiceBase
 			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Render of Renderable[${tmpRenderableHash}] to Destination [${tmpRenderDestinationAddress}]...`);
 		}
 		// Generate the content output from the template and data
-		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this])
+		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this]);
 
 		if (this.pict.LogNoisiness > 0)
 		{
@@ -525,7 +537,7 @@ class PictView extends libFableServiceBase
 		this.pict.ContentAssignment.projectContent(tmpRenderable.RenderMethod, tmpRenderDestinationAddress, tmpContent, tmpRenderable.TestAddress);
 
 		// Execute the developer-overridable post-render behavior
-		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent)
+		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
 
 		this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
 
@@ -535,10 +547,12 @@ class PictView extends libFableServiceBase
 	/**
 	 * Render a renderable from this view.
 	 *
-	 * @param {string | ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
-	 * @param {string | ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-	 * @param {string | ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+	 * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
 	 * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+	 *
+	 * @return {void}
 	 */
 	renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
 	{
@@ -555,11 +569,11 @@ class PictView extends libFableServiceBase
 		if (!tmpCallback)
 		{
 			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} renderAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
-			tmpCallback = (pError) => 
+			tmpCallback = (pError) =>
 				{
 					if (pError)
 					{
-						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} renderAsync Auto Callback Error: ${pError}`, pError)						
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} renderAsync Auto Callback Error: ${pError}`, pError);
 					}
 				};
 		}
@@ -672,9 +686,14 @@ class PictView extends libFableServiceBase
 		this.renderAsync(fCallback);
 	}
 
-	basicRender(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress)
+	/**
+	 * @param {string} [pRenderableHash] - The hash of the renderable to render.
+	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+	 */
+	basicRender(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress)
 	{
-		let tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+		let tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
 		if (tmpRenderOptions.Valid)
 		{
 			this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this]));
@@ -687,16 +706,22 @@ class PictView extends libFableServiceBase
 		}
 	}
 
-	basicRenderAsync(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
+	/**
+	 * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+	 * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+	 * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+	 * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+	 */
+	basicRenderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
 	{
 		// Allow the callback to be passed in as the last parameter no matter what
-		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
+		const tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
 							(typeof(pTemplateRecordAddress) === 'function') ? pTemplateRecordAddress :
 							(typeof(pRenderDestinationAddress) === 'function') ? pRenderDestinationAddress :
-							(typeof(pRenderable) === 'function') ? pRenderable :
+							(typeof(pRenderableHash) === 'function') ? pRenderableHash :
 							false;
 
-		let tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+		const tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
 		if (tmpRenderOptions.Valid)
 		{
 			this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record,
@@ -710,7 +735,7 @@ class PictView extends libFableServiceBase
 
 					this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, pContent);
 					return tmpCallback();
-				}, [this])
+				}, [this]);
 		}
 		else
 		{
@@ -723,10 +748,10 @@ class PictView extends libFableServiceBase
 	/**
 	 * Lifecycle hook that triggers after the view is rendered.
 	 *
-	 * @param {any} [pRenderable] - The renderable that was rendered.
-	 * @param {string} [pRenderDestinationAddress] - The address where the renderable was rendered.
-	 * @param {any} [pRecord] - The record (data) that was used by the renderable.
-	 * @param {string} [pContent] - The content that was rendered.
+	 * @param {Renderable} pRenderable - The renderable that was rendered.
+	 * @param {string} pRenderDestinationAddress - The address where the renderable was rendered.
+	 * @param {any} pRecord - The record (data) that was used by the renderable.
+	 * @param {string} pContent - The content that was rendered.
 	 */
 	onAfterRender(pRenderable, pRenderDestinationAddress, pRecord, pContent)
 	{
@@ -827,11 +852,11 @@ class PictView extends libFableServiceBase
 		if (!tmpCallback)
 		{
 			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} solveAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
-			tmpCallback = (pError) => 
+			tmpCallback = (pError) =>
 				{
 					if (pError)
 					{
-						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} solveAsync Auto Callback Error: ${pError}`, pError)						
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} solveAsync Auto Callback Error: ${pError}`, pError);
 					}
 				};
 		}
@@ -958,11 +983,11 @@ class PictView extends libFableServiceBase
 		if (!tmpCallback)
 		{
 			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalFromViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
-			tmpCallback = (pError) => 
+			tmpCallback = (pError) =>
 				{
 					if (pError)
 					{
-						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalFromViewAsync Auto Callback Error: ${pError}`, pError)						
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalFromViewAsync Auto Callback Error: ${pError}`, pError);
 					}
 				};
 		}
@@ -1087,11 +1112,11 @@ class PictView extends libFableServiceBase
 		if (!tmpCallback)
 		{
 			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalToViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
-			tmpCallback = (pError) => 
+			tmpCallback = (pError) =>
 				{
 					if (pError)
 					{
-						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalToViewAsync Auto Callback Error: ${pError}`, pError)						
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalToViewAsync Auto Callback Error: ${pError}`, pError);
 					}
 				};
 		}

@@ -1,6 +1,6 @@
 {
     "name": "pict-view",
-    "version": "1.0.56",
+    "version": "1.0.57",
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {
@@ -11,9 +11,10 @@
         "docker-dev-build": "docker build ./ -f Dockerfile_LUXURYCode -t pict-view-image:local",
         "docker-dev-run": "docker run -it -d --name pict-view-dev -p 30001:8080 -p 38086:8086 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/pict-view\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" pict-view-image:local",
         "docker-dev-shell": "docker exec -it pict-view-dev /bin/bash",
-        "types": "npx -p typescript tsc -p . --outDir types"
+        "types": "tsc -p .",
+        "lint": "eslint source/**"
     },
-    "types": "types/Pict-View.d.ts",
+    "types": "types/source/Pict-View.d.ts",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/stevenvelozo/pict-view.git"
@@ -25,8 +26,10 @@
     },
     "homepage": "https://github.com/stevenvelozo/pict-view#readme",
     "devDependencies": {
+        "@eslint/js": "^9.17.0",
         "browser-env": "^3.3.0",
-        "pict": "^1.0.226",
+        "eslint": "^9.17.0",
+        "pict": "^1.0.227",
         "quackage": "^1.0.36",
         "typescript": "^5.7.2"
     },

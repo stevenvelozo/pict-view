@@ -4,9 +4,10 @@
 	{
 		"target": "es2019",
 		"allowJs": true,
+		"checkJs": true,
 		"declaration": true,
 		"emitDeclarationOnly": true,
-		"outDir": "dist",
+		"outDir": "types",
 		"declarationMap": true,
 		"module": "commonjs",
 		"resolveJsonModule": true

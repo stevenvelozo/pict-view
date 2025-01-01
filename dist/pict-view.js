@@ -159,7 +159,7 @@
     3: [function (require, module, exports) {
       module.exports = {
         "name": "pict-view",
-        "version": "1.0.56",
+        "version": "1.0.59",
         "description": "Pict View Base Class",
         "main": "source/Pict-View.js",
         "scripts": {
@@ -170,9 +170,10 @@
           "docker-dev-build": "docker build ./ -f Dockerfile_LUXURYCode -t pict-view-image:local",
           "docker-dev-run": "docker run -it -d --name pict-view-dev -p 30001:8080 -p 38086:8086 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/pict-view\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" pict-view-image:local",
           "docker-dev-shell": "docker exec -it pict-view-dev /bin/bash",
-          "types": "npx -p typescript tsc -p . --outDir types"
+          "types": "tsc -p .",
+          "lint": "eslint source/**"
         },
-        "types": "types/Pict-View.d.ts",
+        "types": "types/source/Pict-View.d.ts",
         "repository": {
           "type": "git",
           "url": "git+https://github.com/stevenvelozo/pict-view.git"
@@ -184,8 +185,10 @@
         },
         "homepage": "https://github.com/stevenvelozo/pict-view#readme",
         "devDependencies": {
+          "@eslint/js": "^9.17.0",
           "browser-env": "^3.3.0",
-          "pict": "^1.0.226",
+          "eslint": "^9.17.0",
+          "pict": "^1.0.228",
           "quackage": "^1.0.36",
           "typescript": "^5.7.2"
         },
@@ -238,13 +241,17 @@
       /** @typedef {number | boolean} PictTimestamp */
 
       /**
+       * @typedef {'replace' | 'append' | 'prepend' | 'append_once'} RenderMethod
+       */
+      /**
        * @typedef {Object} Renderable
        *
        * @property {string} RenderableHash - A unique hash for the renderable.
        * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
        * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
        * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
-       * @property {string} [RenderMethod] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
+       * @property {RenderMethod} [RenderMethod=replace] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
+       * @property {string} [TestAddress] - The address to use for testing the renderable.
        */
 
       /**
@@ -350,7 +357,7 @@
          * @param {string} [pTemplateHash] - (optional) The hash of the template for the renderable.
          * @param {string} [pDefaultTemplateRecordAddress] - (optional) The default data address for the template.
          * @param {string} [pDefaultDestinationAddress] - (optional) The default destination address for the renderable.
-         * @param {string} [pRenderMethod] - (optional) The method to use when rendering the renderable (ex. 'replace').
+         * @param {RenderMethod} [pRenderMethod=replace] - (optional) The method to use when rendering the renderable (ex. 'replace').
          */
         addRenderable(pRenderableHash, pTemplateHash, pDefaultTemplateRecordAddress, pDefaultDestinationAddress, pRenderMethod) {
           /** @type {Renderable} */
@@ -360,6 +367,7 @@
             // Use theirs instead!
             tmpRenderable = pRenderableHash;
           } else {
+            /** @type {RenderMethod} */
             let tmpRenderMethod = typeof pRenderMethod !== 'string' ? pRenderMethod : 'replace';
             tmpRenderable = {
               RenderableHash: pRenderableHash,
@@ -458,7 +466,13 @@
             tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
-            tmpAnticipate.wait(pError => {
+            tmpAnticipate.wait(/** @param {Error} pError */
+            pError => {
+              if (pError) {
+                this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization failed: ${pError.message || pError}`, {
+                  stack: pError.stack
+                });
+              }
               this.initializeTimestamp = this.pict.log.getTimeStamp();
               if (this.pict.LogNoisiness > 0) {
                 this.log.info(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization complete.`);
@@ -494,9 +508,9 @@
         /**
          * Lifecycle hook that triggers before the view is rendered.
          *
-         * @param {any} [pRenderable] - The renderable that will be rendered.
-         * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-         * @param {any} [pRecord] - The record (data) that will be used to render the renderable.
+         * @param {Renderable} pRenderable - The renderable that will be rendered.
+         * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
+         * @param {any} pRecord - The record (data) that will be used to render the renderable.
          */
         onBeforeRender(pRenderable, pRenderDestinationAddress, pRecord) {
           // Overload this to mess with stuff before the content gets generated from the template
@@ -517,12 +531,12 @@
 
         /**
          * Builds the render options for a renderable.
-         * 
+         *
          * For DRY purposes on the three flavors of render.
-         * 
-         * @param {string} [pRenderableHash] - The hash of the renderable to render.
-         * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-         * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+         *
+         * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
          */
         buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress) {
           let tmpRenderOptions = {
@@ -548,16 +562,16 @@
             tmpRenderOptions.Record = pTemplateRecordAddress;
           } else {
             tmpRenderOptions.RecordAddress = typeof pTemplateRecordAddress === 'string' ? pTemplateRecordAddress : typeof tmpRenderOptions.Renderable.DefaultTemplateRecordAddress === 'string' ? tmpRenderOptions.Renderable.DefaultTemplateRecordAddress : typeof this.options.DefaultTemplateRecordAddress === 'string' ? this.options.DefaultTemplateRecordAddress : false;
-            tmpRenderOptions.Record = typeof tmpRecordAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpRecordAddress) : undefined;
+            tmpRenderOptions.Record = typeof tmpRenderOptions.RecordAddress === 'string' ? this.pict.DataProvider.getDataByAddress(tmpRenderOptions.RecordAddress) : undefined;
           }
           return tmpRenderOptions;
         }
 
         /**
          * Assigns the content to the destination address.
-         * 
+         *
          * For DRY purposes on the three flavors of render.
-         * 
+         *
          * @param {Renderable} pRenderable - The renderable to render.
          * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
          * @param {string} pContent - The content to render.
@@ -573,7 +587,8 @@
          *
          * @param {string} [pRenderable] - The hash of the renderable to render.
          * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-         * @param {string} [pTemplateRecordAddress] - The address where the data for the template is stored.
+         * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+         * @return {boolean}
          */
         render(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
@@ -627,10 +642,12 @@
         /**
          * Render a renderable from this view.
          *
-         * @param {string | ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
-         * @param {string | ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-         * @param {string | ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+         * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
          * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+         *
+         * @return {void}
          */
         renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
           let tmpRenderableHash = typeof pRenderableHash === 'string' ? pRenderableHash : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
@@ -714,8 +731,14 @@
           // Render the default renderable
           this.renderAsync(fCallback);
         }
-        basicRender(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress) {
-          let tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+
+        /**
+         * @param {string} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+         */
+        basicRender(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress) {
+          let tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
           if (tmpRenderOptions.Valid) {
             this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this]));
             return true;
@@ -724,10 +747,17 @@
             return false;
           }
         }
-        basicRenderAsync(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
+
+        /**
+         * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+         * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+         */
+        basicRenderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
           // Allow the callback to be passed in as the last parameter no matter what
-          let tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderable === 'function' ? pRenderable : false;
-          let tmpRenderOptions = this.buildRenderOptions(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+          const tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : false;
+          const tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
           if (tmpRenderOptions.Valid) {
             this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, (pError, pContent) => {
               if (pError) {
@@ -747,10 +777,10 @@
         /**
          * Lifecycle hook that triggers after the view is rendered.
          *
-         * @param {any} [pRenderable] - The renderable that was rendered.
-         * @param {string} [pRenderDestinationAddress] - The address where the renderable was rendered.
-         * @param {any} [pRecord] - The record (data) that was used by the renderable.
-         * @param {string} [pContent] - The content that was rendered.
+         * @param {Renderable} pRenderable - The renderable that was rendered.
+         * @param {string} pRenderDestinationAddress - The address where the renderable was rendered.
+         * @param {any} pRecord - The record (data) that was used by the renderable.
+         * @param {string} pContent - The content that was rendered.
          */
         onAfterRender(pRenderable, pRenderDestinationAddress, pRecord, pContent) {
           if (this.pict.LogNoisiness > 3) {

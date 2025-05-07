@@ -159,7 +159,7 @@
     3: [function (require, module, exports) {
       module.exports = {
         "name": "pict-view",
-        "version": "1.0.59",
+        "version": "1.0.60",
         "description": "Pict View Base Class",
         "main": "source/Pict-View.js",
         "scripts": {
@@ -188,8 +188,8 @@
           "@eslint/js": "^9.17.0",
           "browser-env": "^3.3.0",
           "eslint": "^9.17.0",
-          "pict": "^1.0.228",
-          "quackage": "^1.0.36",
+          "pict": "^1.0.238",
+          "quackage": "^1.0.41",
           "typescript": "^5.7.2"
         },
         "mocha": {
@@ -204,7 +204,7 @@
           "watch-ignore": ["lib/vendor"]
         },
         "dependencies": {
-          "fable": "^3.0.146",
+          "fable": "^3.1.3",
           "fable-serviceproviderbase": "^3.0.15"
         }
       };
@@ -466,7 +466,7 @@
             tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
-            tmpAnticipate.wait(/** @param {Error} pError */
+            tmpAnticipate.wait( /** @param {Error} pError */
             pError => {
               if (pError) {
                 this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization failed: ${pError.message || pError}`, {
@@ -596,7 +596,17 @@
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it is not a valid renderable.`);
             return false;
           }
-          let tmpRenderable = this.renderables[tmpRenderableHash];
+          let tmpRenderable;
+          if (tmpRenderableHash == '__Virtual') {
+            tmpRenderable = {
+              RenderableHash: '__Virtual',
+              TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
+              DestinationAddress: pRenderDestinationAddress,
+              RenderMethod: 'virtual-assignment'
+            };
+          } else {
+            tmpRenderable = this.renderables[tmpRenderableHash];
+          }
           if (!tmpRenderable) {
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it does not exist.`);
             return false;
@@ -666,7 +676,17 @@
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`);
             return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
           }
-          let tmpRenderable = this.renderables[tmpRenderableHash];
+          let tmpRenderable;
+          if (tmpRenderableHash == '__Virtual') {
+            tmpRenderable = {
+              RenderableHash: '__Virtual',
+              TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
+              DestinationAddress: pRenderDestinationAddress,
+              RenderMethod: 'virtual-assignment'
+            };
+          } else {
+            tmpRenderable = this.renderables[tmpRenderableHash];
+          }
           if (!tmpRenderable) {
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`);
             return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`));
@@ -1133,3 +1153,4 @@
     }]
   }, {}, [4])(4);
 });
+//# sourceMappingURL=pict-view.js.map

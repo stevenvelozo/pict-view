@@ -479,7 +479,20 @@ class PictView extends libFableServiceBase
 			return false;
 		}
 
-		let tmpRenderable = this.renderables[tmpRenderableHash];
+		let tmpRenderable;
+		if (tmpRenderableHash == '__Virtual')
+		{
+			tmpRenderable = {
+					RenderableHash: '__Virtual',
+					TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
+					DestinationAddress: pRenderDestinationAddress,
+					RenderMethod: 'virtual-assignment'
+				}
+		}
+		else
+		{
+			tmpRenderable = this.renderables[tmpRenderableHash];
+		}
 
 		if (!tmpRenderable)
 		{
@@ -558,7 +571,7 @@ class PictView extends libFableServiceBase
 	{
 		let tmpRenderableHash = (typeof (pRenderableHash) === 'string') ? pRenderableHash :
 			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
-
+		
 		// Allow the callback to be passed in as the last parameter no matter what
 		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
 							(typeof(pTemplateRecordAddress) === 'function') ? pTemplateRecordAddress :
@@ -584,7 +597,20 @@ class PictView extends libFableServiceBase
 			return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
 		}
 
-		let tmpRenderable = this.renderables[tmpRenderableHash];
+		let tmpRenderable;
+		if (tmpRenderableHash == '__Virtual')
+		{
+			tmpRenderable = {
+					RenderableHash: '__Virtual',
+					TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
+					DestinationAddress: pRenderDestinationAddress,
+					RenderMethod: 'virtual-assignment'
+				}
+		}
+		else
+		{
+			tmpRenderable = this.renderables[tmpRenderableHash];
+		}
 
 		if (!tmpRenderable)
 		{

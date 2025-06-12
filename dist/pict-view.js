@@ -159,7 +159,7 @@
     3: [function (require, module, exports) {
       module.exports = {
         "name": "pict-view",
-        "version": "1.0.60",
+        "version": "1.0.61",
         "description": "Pict View Base Class",
         "main": "source/Pict-View.js",
         "scripts": {
@@ -185,12 +185,12 @@
         },
         "homepage": "https://github.com/stevenvelozo/pict-view#readme",
         "devDependencies": {
-          "@eslint/js": "^9.17.0",
+          "@eslint/js": "^9.28.0",
           "browser-env": "^3.3.0",
-          "eslint": "^9.17.0",
-          "pict": "^1.0.238",
+          "eslint": "^9.28.0",
+          "pict": "^1.0.272",
           "quackage": "^1.0.41",
-          "typescript": "^5.7.2"
+          "typescript": "^5.8.3"
         },
         "mocha": {
           "diff": true,
@@ -204,7 +204,7 @@
           "watch-ignore": ["lib/vendor"]
         },
         "dependencies": {
-          "fable": "^3.1.3",
+          "fable": "^3.1.11",
           "fable-serviceproviderbase": "^3.0.15"
         }
       };
@@ -282,13 +282,14 @@
             this.options.ViewIdentifier = `AutoViewID-${this.fable.getUUID()}`;
           }
           this.serviceType = 'PictView';
-          /** @type {Object} */
+          /** @type {Record<string, any>} */
           this._Package = libPackage;
           // Convenience and consistency naming
           /** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
           this.pict = this.fable;
           // Wire in the essential Pict application state
           this.AppData = this.pict.AppData;
+          this.Bundle = this.pict.Bundle;
 
           /** @type {PictTimestamp} */
           this.initializeTimestamp = false;
@@ -466,7 +467,7 @@
             tmpAnticipate.anticipate(this.onBeforeInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onInitializeAsync.bind(this));
             tmpAnticipate.anticipate(this.onAfterInitializeAsync.bind(this));
-            tmpAnticipate.wait( /** @param {Error} pError */
+            tmpAnticipate.wait(/** @param {Error} pError */
             pError => {
               if (pError) {
                 this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} initialization failed: ${pError.message || pError}`, {
@@ -663,7 +664,8 @@
           let tmpRenderableHash = typeof pRenderableHash === 'string' ? pRenderableHash : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
 
           // Allow the callback to be passed in as the last parameter no matter what
-          let tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : false;
+          /** @type {ErrorCallback} */
+          let tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : null;
           if (!tmpCallback) {
             this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} renderAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
             tmpCallback = pError => {
@@ -674,7 +676,7 @@
           }
           if (!tmpRenderableHash) {
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`);
-            return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
+            return tmpCallback(new Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
           }
           let tmpRenderable;
           if (tmpRenderableHash == '__Virtual') {
@@ -689,12 +691,12 @@
           }
           if (!tmpRenderable) {
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`);
-            return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`));
+            return tmpCallback(new Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`));
           }
           let tmpRenderDestinationAddress = typeof pRenderDestinationAddress === 'string' ? pRenderDestinationAddress : typeof tmpRenderable.ContentDestinationAddress === 'string' ? tmpRenderable.ContentDestinationAddress : typeof this.options.DefaultDestinationAddress === 'string' ? this.options.DefaultDestinationAddress : false;
           if (!tmpRenderDestinationAddress) {
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not have a valid destination address.`);
-            return tmpCallback(Error(`Could not render ${tmpRenderableHash}`));
+            return tmpCallback(new Error(`Could not render ${tmpRenderableHash}`));
           }
           let tmpRecordAddress;
           let tmpRecord;
@@ -771,15 +773,29 @@
         /**
          * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
          * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-         * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+         * @param {string|Object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
          * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
          */
         basicRenderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
           // Allow the callback to be passed in as the last parameter no matter what
-          const tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : false;
+          /** @type {ErrorCallback} */
+          let tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : null;
+          if (!tmpCallback) {
+            this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} basicRenderAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
+            tmpCallback = pError => {
+              if (pError) {
+                this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} basicRenderAsync Auto Callback Error: ${pError}`, pError);
+              }
+            };
+          }
           const tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
           if (tmpRenderOptions.Valid) {
-            this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, (pError, pContent) => {
+            this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record,
+            /**
+             * @param {Error} [pError] - The error that occurred during template parsing.
+             * @param {string} [pContent] - The content that was rendered from the template.
+             */
+            (pError, pContent) => {
               if (pError) {
                 this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderOptions.RenderableHash} because it did not parse the template.`, pError);
                 return tmpCallback(pError);
@@ -790,7 +806,7 @@
           } else {
             let tmpErrorMessage = `PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not perform a basic render of ${tmpRenderOptions.RenderableHash} because it is not valid.`;
             this.log.error(tmpErrorMessage);
-            return tmpCallback(tmpErrorMessage);
+            return tmpCallback(new Error(tmpErrorMessage));
           }
         }
 
@@ -884,7 +900,9 @@
          */
         solveAsync(fCallback) {
           let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
-          let tmpCallback = typeof fCallback === 'function' ? fCallback : false;
+
+          /** @type {ErrorCallback} */
+          let tmpCallback = typeof fCallback === 'function' ? fCallback : null;
           if (!tmpCallback) {
             this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} solveAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
             tmpCallback = pError => {
@@ -993,7 +1011,9 @@
          */
         marshalFromViewAsync(fCallback) {
           let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
-          let tmpCallback = typeof fCallback === 'function' ? fCallback : false;
+
+          /** @type {ErrorCallback} */
+          let tmpCallback = typeof fCallback === 'function' ? fCallback : null;
           if (!tmpCallback) {
             this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalFromViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
             tmpCallback = pError => {
@@ -1100,7 +1120,9 @@
          */
         marshalToViewAsync(fCallback) {
           let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
-          let tmpCallback = typeof fCallback === 'function' ? fCallback : false;
+
+          /** @type {ErrorCallback} */
+          let tmpCallback = typeof fCallback === 'function' ? fCallback : null;
           if (!tmpCallback) {
             this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalToViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
             tmpCallback = pError => {

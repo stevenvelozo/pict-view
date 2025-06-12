@@ -35,14 +35,15 @@ declare class PictView {
     /** @type {any} */
     log: any;
     serviceType: string;
-    /** @type {Object} */
-    _Package: any;
+    /** @type {Record<string, any>} */
+    _Package: Record<string, any>;
     /** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
     pict: import("pict") & {
         log: any;
         instantiateServiceProviderWithoutRegistration: (hash: string) => any;
     };
-    AppData: any;
+    AppData: Record<string, any>;
+    Bundle: Record<string, any>;
     /** @type {PictTimestamp} */
     initializeTimestamp: PictTimestamp;
     /** @type {PictTimestamp} */
@@ -175,10 +176,10 @@ declare class PictView {
     /**
      * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
      * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-     * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+     * @param {string|Object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
      * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
      */
-    basicRenderAsync(pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | object | ErrorCallback, fCallback?: ErrorCallback): any;
+    basicRenderAsync(pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | any | ErrorCallback, fCallback?: ErrorCallback): void;
     /**
      * Lifecycle hook that triggers after the view is rendered.
      *

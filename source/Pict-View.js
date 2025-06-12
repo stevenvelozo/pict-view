@@ -87,13 +87,14 @@ class PictView extends libFableServiceBase
 			this.options.ViewIdentifier = `AutoViewID-${this.fable.getUUID()}`;
 		}
 		this.serviceType = 'PictView';
-		/** @type {Object} */
+		/** @type {Record<string, any>} */
 		this._Package = libPackage;
 		// Convenience and consistency naming
 		/** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
 		this.pict = this.fable;
 		// Wire in the essential Pict application state
 		this.AppData = this.pict.AppData;
+		this.Bundle = this.pict.Bundle;
 
 		/** @type {PictTimestamp} */
 		this.initializeTimestamp = false;
@@ -487,7 +488,7 @@ class PictView extends libFableServiceBase
 					TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
 					DestinationAddress: pRenderDestinationAddress,
 					RenderMethod: 'virtual-assignment'
-				}
+				};
 		}
 		else
 		{
@@ -571,13 +572,14 @@ class PictView extends libFableServiceBase
 	{
 		let tmpRenderableHash = (typeof (pRenderableHash) === 'string') ? pRenderableHash :
 			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
-		
+
 		// Allow the callback to be passed in as the last parameter no matter what
+		/** @type {ErrorCallback} */
 		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
 							(typeof(pTemplateRecordAddress) === 'function') ? pTemplateRecordAddress :
 							(typeof(pRenderDestinationAddress) === 'function') ? pRenderDestinationAddress :
 							(typeof(pRenderableHash) === 'function') ? pRenderableHash :
-							false;
+							null;
 
 		if (!tmpCallback)
 		{
@@ -594,7 +596,7 @@ class PictView extends libFableServiceBase
 		if (!tmpRenderableHash)
 		{
 			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`);
-			return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
+			return tmpCallback(new Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
 		}
 
 		let tmpRenderable;
@@ -605,7 +607,7 @@ class PictView extends libFableServiceBase
 					TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
 					DestinationAddress: pRenderDestinationAddress,
 					RenderMethod: 'virtual-assignment'
-				}
+				};
 		}
 		else
 		{
@@ -615,7 +617,7 @@ class PictView extends libFableServiceBase
 		if (!tmpRenderable)
 		{
 			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`);
-			return tmpCallback(Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`));
+			return tmpCallback(new Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`));
 		}
 
 		let tmpRenderDestinationAddress = (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
@@ -625,7 +627,7 @@ class PictView extends libFableServiceBase
 		if (!tmpRenderDestinationAddress)
 		{
 			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not have a valid destination address.`);
-			return tmpCallback(Error(`Could not render ${tmpRenderableHash}`));
+			return tmpCallback(new Error(`Could not render ${tmpRenderableHash}`));
 		}
 
 		let tmpRecordAddress;
@@ -735,22 +737,38 @@ class PictView extends libFableServiceBase
 	/**
 	 * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
 	 * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
-	 * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+	 * @param {string|Object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
 	 * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
 	 */
 	basicRenderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
 	{
 		// Allow the callback to be passed in as the last parameter no matter what
-		const tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
+		/** @type {ErrorCallback} */
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback :
 							(typeof(pTemplateRecordAddress) === 'function') ? pTemplateRecordAddress :
 							(typeof(pRenderDestinationAddress) === 'function') ? pRenderDestinationAddress :
 							(typeof(pRenderableHash) === 'function') ? pRenderableHash :
-							false;
+							null;
+		if (!tmpCallback)
+		{
+			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} basicRenderAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
+			tmpCallback = (pError) =>
+				{
+					if (pError)
+					{
+						this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} basicRenderAsync Auto Callback Error: ${pError}`, pError);
+					}
+				};
+		}
 
 		const tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
 		if (tmpRenderOptions.Valid)
 		{
 			this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record,
+				/**
+				 * @param {Error} [pError] - The error that occurred during template parsing.
+				 * @param {string} [pContent] - The content that was rendered from the template.
+				 */
 				(pError, pContent) =>
 				{
 					if (pError)
@@ -767,7 +785,7 @@ class PictView extends libFableServiceBase
 		{
 			let tmpErrorMessage = `PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not perform a basic render of ${tmpRenderOptions.RenderableHash} because it is not valid.`;
 			this.log.error(tmpErrorMessage);
-			return tmpCallback(tmpErrorMessage);
+			return tmpCallback(new Error(tmpErrorMessage));
 		}
 	}
 
@@ -874,7 +892,8 @@ class PictView extends libFableServiceBase
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
-		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : false;
+		/** @type {ErrorCallback} */
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : null;
 		if (!tmpCallback)
 		{
 			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} solveAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
@@ -1005,7 +1024,8 @@ class PictView extends libFableServiceBase
 	{
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
-		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : false;
+		/** @type {ErrorCallback} */
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : null;
 		if (!tmpCallback)
 		{
 			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalFromViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);
@@ -1134,7 +1154,8 @@ class PictView extends libFableServiceBase
 		let tmpAnticipate = this.pict.instantiateServiceProviderWithoutRegistration('Anticipate');
 
 
-		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : false;
+		/** @type {ErrorCallback} */
+		let tmpCallback = (typeof(fCallback) === 'function') ? fCallback : null;
 		if (!tmpCallback)
 		{
 			this.log.warn(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.Name} marshalToViewAsync was called without a valid callback.  A callback will be generated but this could lead to race conditions.`);

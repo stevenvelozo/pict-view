@@ -4,9 +4,9 @@
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {
-        "test": "./node_modules/.bin/mocha -u tdd -R spec",
+        "test": "mocha -u tdd -R spec",
         "start": "node source/Pict-View.js",
-        "coverage": "./node_modules/.bin/nyc --reporter=lcov --reporter=text-lcov ./node_modules/mocha/bin/_mocha -- -u tdd -R spec",
+        "coverage": "nyc --reporter=lcov --reporter=text-lcov npm test",
         "build": "npx quack build",
         "docker-dev-build": "docker build ./ -f Dockerfile_LUXURYCode -t pict-view-image:local",
         "docker-dev-run": "docker run -it -d --name pict-view-dev -p 30001:8080 -p 38086:8086 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/pict-view\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" pict-view-image:local",

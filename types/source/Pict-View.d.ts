@@ -151,6 +151,16 @@ declare class PictView {
      */
     render(pRenderable?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object): boolean;
     /**
+     * Render a renderable from this view, providing a specifici scope for the template.
+     *
+     * @param {any} pScope - The scope to use for the template rendering.
+     * @param {string} [pRenderable] - The hash of the renderable to render.
+     * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+     * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+     * @return {boolean}
+     */
+    renderWithScope(pScope: any, pRenderable?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object): boolean;
+    /**
      * Render a renderable from this view.
      *
      * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
@@ -161,6 +171,18 @@ declare class PictView {
      * @return {void}
      */
     renderAsync(pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | object | ErrorCallback, fCallback?: ErrorCallback): void;
+    /**
+     * Render a renderable from this view.
+     *
+     * @param {any} pScope - The scope to use for the template rendering.
+     * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+     * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+     * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+     * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+     *
+     * @return {void}
+     */
+    renderWithScopeAsync(pScope: any, pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | object | ErrorCallback, fCallback?: ErrorCallback): void;
     /**
      * Renders the default renderable.
      *
@@ -174,12 +196,27 @@ declare class PictView {
      */
     basicRender(pRenderableHash?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object): boolean;
     /**
+     * @param {any} pScope - The scope to use for the template rendering.
+     * @param {string} [pRenderableHash] - The hash of the renderable to render.
+     * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+     * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+     */
+    basicRenderWithScope(pScope: any, pRenderableHash?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object): boolean;
+    /**
      * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
      * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
      * @param {string|Object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
      * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
      */
     basicRenderAsync(pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | any | ErrorCallback, fCallback?: ErrorCallback): void;
+    /**
+     * @param {any} pScope - The scope to use for the template rendering.
+     * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+     * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+     * @param {string|Object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+     * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+     */
+    basicRenderWithScopeAsync(pScope: any, pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | any | ErrorCallback, fCallback?: ErrorCallback): void;
     /**
      * Lifecycle hook that triggers after the view is rendered.
      *

@@ -159,13 +159,13 @@
     3: [function (require, module, exports) {
       module.exports = {
         "name": "pict-view",
-        "version": "1.0.61",
+        "version": "1.0.62",
         "description": "Pict View Base Class",
         "main": "source/Pict-View.js",
         "scripts": {
-          "test": "./node_modules/.bin/mocha -u tdd -R spec",
+          "test": "mocha -u tdd -R spec",
           "start": "node source/Pict-View.js",
-          "coverage": "./node_modules/.bin/nyc --reporter=lcov --reporter=text-lcov ./node_modules/mocha/bin/_mocha -- -u tdd -R spec",
+          "coverage": "nyc --reporter=lcov --reporter=text-lcov npm test",
           "build": "npx quack build",
           "docker-dev-build": "docker build ./ -f Dockerfile_LUXURYCode -t pict-view-image:local",
           "docker-dev-run": "docker run -it -d --name pict-view-dev -p 30001:8080 -p 38086:8086 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/pict-view\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" pict-view-image:local",
@@ -188,8 +188,8 @@
           "@eslint/js": "^9.28.0",
           "browser-env": "^3.3.0",
           "eslint": "^9.28.0",
-          "pict": "^1.0.272",
-          "quackage": "^1.0.41",
+          "pict": "^1.0.275",
+          "quackage": "^1.0.42",
           "typescript": "^5.8.3"
         },
         "mocha": {
@@ -204,7 +204,7 @@
           "watch-ignore": ["lib/vendor"]
         },
         "dependencies": {
-          "fable": "^3.1.11",
+          "fable": "^3.1.14",
           "fable-serviceproviderbase": "^3.0.15"
         }
       };
@@ -592,6 +592,19 @@
          * @return {boolean}
          */
         render(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress) {
+          return this.renderWithScope(this, pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+        }
+
+        /**
+         * Render a renderable from this view, providing a specifici scope for the template.
+         *
+         * @param {any} pScope - The scope to use for the template rendering.
+         * @param {string} [pRenderable] - The hash of the renderable to render.
+         * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+         * @return {boolean}
+         */
+        renderWithScope(pScope, pRenderable, pRenderDestinationAddress, pTemplateRecordAddress) {
           let tmpRenderableHash = typeof pRenderable === 'string' ? pRenderable : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
           if (!tmpRenderableHash) {
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it is not a valid renderable.`);
@@ -636,7 +649,7 @@
             this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Render of Renderable[${tmpRenderableHash}] to Destination [${tmpRenderDestinationAddress}]...`);
           }
           // Generate the content output from the template and data
-          let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this]);
+          let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this], pScope);
           if (this.pict.LogNoisiness > 0) {
             this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${tmpContent.length} to Destination [${tmpRenderDestinationAddress}] using render method [${tmpRenderable.RenderMethod}].`);
           }
@@ -661,6 +674,21 @@
          * @return {void}
          */
         renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
+          return this.renderWithScopeAsync(this, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback);
+        }
+
+        /**
+         * Render a renderable from this view.
+         *
+         * @param {any} pScope - The scope to use for the template rendering.
+         * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+         * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+         *
+         * @return {void}
+         */
+        renderWithScopeAsync(pScope, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
           let tmpRenderableHash = typeof pRenderableHash === 'string' ? pRenderableHash : typeof this.options.DefaultRenderable == 'string' ? this.options.DefaultRenderable : false;
 
           // Allow the callback to be passed in as the last parameter no matter what
@@ -735,7 +763,7 @@
               // Execute the developer-overridable asynchronous post-render behavior
               this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
               return fAsyncTemplateCallback();
-            }, [this]);
+            }, [this], pScope);
           });
           tmpAnticipate.anticipate(fOnAfterRenderCallback => {
             this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
@@ -760,9 +788,19 @@
          * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
          */
         basicRender(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress) {
+          return this.basicRenderWithScope(this, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
+        }
+
+        /**
+         * @param {any} pScope - The scope to use for the template rendering.
+         * @param {string} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|object} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+         */
+        basicRenderWithScope(pScope, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress) {
           let tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
           if (tmpRenderOptions.Valid) {
-            this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this]));
+            this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this], pScope));
             return true;
           } else {
             this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not perform a basic render of ${tmpRenderOptions.RenderableHash} because it is not valid.`);
@@ -777,6 +815,17 @@
          * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
          */
         basicRenderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
+          return this.basicRenderWithScopeAsync(this, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback);
+        }
+
+        /**
+         * @param {any} pScope - The scope to use for the template rendering.
+         * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
+         * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
+         * @param {string|Object|ErrorCallback} [pTemplateRecordAddress] - The address of (or actual obejct) where the data for the template is stored.
+         * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
+         */
+        basicRenderWithScopeAsync(pScope, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback) {
           // Allow the callback to be passed in as the last parameter no matter what
           /** @type {ErrorCallback} */
           let tmpCallback = typeof fCallback === 'function' ? fCallback : typeof pTemplateRecordAddress === 'function' ? pTemplateRecordAddress : typeof pRenderDestinationAddress === 'function' ? pRenderDestinationAddress : typeof pRenderableHash === 'function' ? pRenderableHash : null;
@@ -802,7 +851,7 @@
               }
               this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, pContent);
               return tmpCallback();
-            }, [this]);
+            }, [this], pScope);
           } else {
             let tmpErrorMessage = `PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not perform a basic render of ${tmpRenderOptions.RenderableHash} because it is not valid.`;
             this.log.error(tmpErrorMessage);

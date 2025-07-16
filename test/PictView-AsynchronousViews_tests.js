@@ -78,7 +78,7 @@ suite
 								tmpAnticipate.anticipate(
 									(fCallback) =>
 									{
-										_PictView.renderAsync(false, false, false, fCallback);
+										_PictView.renderAsync(fCallback);
 									}
 								);
 
@@ -87,7 +87,7 @@ suite
 									{
 										Expect(tmpBeforeValue).to.be.true;
 										Expect(tmpAfterValue).to.be.true;
-										Expect(tmpBeforeNonAsyncValue).to.be.true;
+										Expect(tmpBeforeNonAsyncValue).to.be.false; // we changed this, so we don't call both the sync and async versions
 										return fDone();
 									});
 
@@ -132,7 +132,7 @@ suite
 									{
 										Expect(tmpBeforeValue).to.be.true;
 										Expect(tmpAfterValue).to.be.true;
-										Expect(tmpBeforeNonAsyncValue).to.be.true;
+										Expect(tmpBeforeNonAsyncValue).to.be.false; // we changed this, so we don't call both the sync and async versions
 										return fDone();
 									});
 

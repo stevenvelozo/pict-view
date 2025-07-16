@@ -71,7 +71,14 @@ const defaultViewConfiguration = (
 			TemplateHash: "HistoricalEventCategory-Metadata",
 			DestinationAddress: "#HistoricalEventMetadata",
 			RenderMethod: "replace"
-		}
+		},
+		{
+			RenderableHash: "HistoricalEventCategory-List-OverriddenContent",
+			TemplateHash: "HistoricalEventCategory-ListWrapper",
+			TemplateRecordAddress: 'AppData.EventCategoryList',
+			DestinationAddress: "#HistoricalEvents-AppContainer",
+			RenderMethod: "replace"
+		},
 	]
 });
 
@@ -83,6 +90,27 @@ class HistoricalEventsView extends libPictView
 		super(pFable, pOptions, pServiceHash);
 
 		this.historicViewEntry = 'Very Historical';
+	}
+
+	onProject(pRenderable)
+	{
+		if (pRenderable.RenderableHash === 'HistoricalEventCategory-List-OverriddenContent')
+		{
+			pRenderable.Content = pRenderable.Content.replace(
+				/300/g,
+				'3xx'
+			);
+		}
+		return super.onProject(pRenderable);
+	}
+
+	onBeforeProject(pRenderable)
+	{
+		super.onBeforeProject(pRenderable);
+		pRenderable.Content = pRenderable.Content.replace(
+			/<td>/g,
+			'<td style="text: blink">'
+		);
 	}
 }
 

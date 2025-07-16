@@ -42,17 +42,20 @@ const defaultPictViewSettings = (
 /** @typedef {number | boolean} PictTimestamp */
 
 /**
- * @typedef {'replace' | 'append' | 'prepend' | 'append_once'} RenderMethod
+ * @typedef {'replace' | 'append' | 'prepend' | 'append_once' | 'virtual-assignment'} RenderMethod
  */
 /**
  * @typedef {Object} Renderable
  *
  * @property {string} RenderableHash - A unique hash for the renderable.
- * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
+ * @property {string} TemplateHash - The hash of the template to use for rendering this renderable.
  * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
  * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
- * @property {RenderMethod} [RenderMethod=replace] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
+ * @property {RenderMethod} [RenderMethod=replace] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once', 'virtual-assignment').
  * @property {string} [TestAddress] - The address to use for testing the renderable.
+ * @property {string} [TransactionHash] - The transaction hash for the root renderable.
+ * @property {string} [RootRenderableViewHash] - The hash of the root renderable.
+ * @property {string} [Content] - The rendered content for this renderable, if applicable.
  */
 
 /**
@@ -90,7 +93,7 @@ class PictView extends libFableServiceBase
 		/** @type {Record<string, any>} */
 		this._Package = libPackage;
 		// Convenience and consistency naming
-		/** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
+		/** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any, instantiateServiceProviderIfNotExists: (hash: string) => any, TransactionTracking: import('pict/types/source/services/Fable-Service-TransactionTracking') }} */
 		this.pict = this.fable;
 		// Wire in the essential Pict application state
 		this.AppData = this.pict.AppData;
@@ -106,6 +109,8 @@ class PictView extends libFableServiceBase
 		this.lastMarshalFromViewTimestamp = false;
 		/** @type {PictTimestamp} */
 		this.lastMarshalToViewTimestamp = false;
+
+		this.pict.instantiateServiceProviderIfNotExists('TransactionTracking');
 
 		// Load all templates from the array in the options
 		// Templates are in the form of {Hash:'Some-Template-Hash',Template:'Template content',Source:'TemplateSource'}
@@ -160,7 +165,7 @@ class PictView extends libFableServiceBase
 		// They look as such: {Identifier:'ContentEntry', TemplateHash:'Content-Entry-Section-Main', ContentDestinationAddress:'#ContentSection', RecordAddress:'AppData.Content.DefaultText', ManifestTransformation:'ManyfestHash', ManifestDestinationAddress:'AppData.Content.DataToTransformContent'}
 		// The only parts that are necessary are Identifier and Template
 		// A developer can then do render('ContentEntry') and it just kinda works.  Or they can override the ContentDestinationAddress
-		/** @type {Object<String, Renderable>} */
+		/** @type {Record<String, Renderable>} */
 		this.renderables = {};
 		for (let i = 0; i < this.options.Renderables.length; i++)
 		{
@@ -370,10 +375,8 @@ class PictView extends libFableServiceBase
 	 * Lifecycle hook that triggers before the view is rendered.
 	 *
 	 * @param {Renderable} pRenderable - The renderable that will be rendered.
-	 * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
-	 * @param {any} pRecord - The record (data) that will be used to render the renderable.
 	 */
-	onBeforeRender(pRenderable, pRenderDestinationAddress, pRecord)
+	onBeforeRender(pRenderable)
 	{
 		// Overload this to mess with stuff before the content gets generated from the template
 		if (this.pict.LogNoisiness > 3)
@@ -387,9 +390,38 @@ class PictView extends libFableServiceBase
 	 * Lifecycle hook that triggers before the view is rendered (async flow).
 	 *
 	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 * @param {Renderable} pRenderable - The renderable that will be rendered.
 	 */
-	onBeforeRenderAsync(fCallback)
+	onBeforeRenderAsync(fCallback, pRenderable)
 	{
+		this.onBeforeRender(pRenderable);
+		return fCallback();
+	}
+
+	/**
+	 * Lifecycle hook that triggers before the view is projected into the DOM.
+	 *
+	 * @param {Renderable} pRenderable - The renderable that will be projected.
+	 */
+	onBeforeProject(pRenderable)
+	{
+		// Overload this to mess with stuff before the content gets generated from the template
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onBeforeProject:`);
+		}
+		return true;
+	}
+
+	/**
+	 * Lifecycle hook that triggers before the view is projected into the DOM (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 * @param {Renderable} pRenderable - The renderable that will be projected.
+	 */
+	onBeforeProjectAsync(fCallback, pRenderable)
+	{
+		this.onBeforeProject(pRenderable);
 		return fCallback();
 	}
 
@@ -465,63 +497,76 @@ class PictView extends libFableServiceBase
 	/**
 	 * Render a renderable from this view.
 	 *
-	 * @param {string} [pRenderable] - The hash of the renderable to render.
+	 * @param {string} [pRenderableHash] - The hash of the renderable to render.
 	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
 	 * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @param {Renderable} [pRootRenderable] - The root renderable for the render operation, if applicable.
 	 * @return {boolean}
 	 */
-	render(pRenderable, pRenderDestinationAddress, pTemplateRecordAddress)
+	render(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, pRootRenderable)
 	{
-		return this.renderWithScope(this, pRenderable, pRenderDestinationAddress, pTemplateRecordAddress);
+		return this.renderWithScope(this, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, pRootRenderable);
 	}
 
 	/**
 	 * Render a renderable from this view, providing a specifici scope for the template.
 	 *
 	 * @param {any} pScope - The scope to use for the template rendering.
-	 * @param {string} [pRenderable] - The hash of the renderable to render.
+	 * @param {string} [pRenderableHash] - The hash of the renderable to render.
 	 * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
 	 * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @param {Renderable} [pRootRenderable] - The root renderable for the render operation, if applicable.
 	 * @return {boolean}
 	 */
-	renderWithScope(pScope, pRenderable, pRenderDestinationAddress, pTemplateRecordAddress)
+	renderWithScope(pScope, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, pRootRenderable)
 	{
-		let tmpRenderableHash = (typeof (pRenderable) === 'string') ? pRenderable :
+		let tmpRenderableHash = (typeof (pRenderableHash) === 'string') ? pRenderableHash :
 			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
 		if (!tmpRenderableHash)
 		{
-			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it is not a valid renderable.`);
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it is not a valid renderable.`);
 			return false;
 		}
 
+		/** @type {Renderable} */
 		let tmpRenderable;
 		if (tmpRenderableHash == '__Virtual')
 		{
 			tmpRenderable = {
-					RenderableHash: '__Virtual',
-					TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
-					DestinationAddress: pRenderDestinationAddress,
-					RenderMethod: 'virtual-assignment'
-				};
+				RenderableHash: '__Virtual',
+				TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
+				ContentDestinationAddress: (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
+					(typeof (tmpRenderable.ContentDestinationAddress) === 'string') ? tmpRenderable.ContentDestinationAddress :
+					(typeof (this.options.DefaultDestinationAddress) === 'string') ? this.options.DefaultDestinationAddress : null,
+				RenderMethod: 'virtual-assignment',
+				TransactionHash: pRootRenderable && pRootRenderable.TransactionHash,
+				RootRenderableViewHash: pRootRenderable && pRootRenderable.RootRenderableViewHash,
+			};
 		}
 		else
 		{
-			tmpRenderable = this.renderables[tmpRenderableHash];
+			tmpRenderable = Object.assign({}, this.renderables[tmpRenderableHash]);
+			tmpRenderable.ContentDestinationAddress = (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
+				(typeof (tmpRenderable.ContentDestinationAddress) === 'string') ? tmpRenderable.ContentDestinationAddress :
+				(typeof (this.options.DefaultDestinationAddress) === 'string') ? this.options.DefaultDestinationAddress : null;
+		}
+
+		if (!tmpRenderable.TransactionHash)
+		{
+			tmpRenderable.TransactionHash = `ViewRender-V-${this.options.ViewIdentifier}-R-${tmpRenderableHash}-U-${this.pict.getUUID()}`;
+			tmpRenderable.RootRenderableViewHash = this.Hash;
+			this.pict.TransactionTracking.registerTransaction(tmpRenderable.TransactionHash);
 		}
 
 		if (!tmpRenderable)
 		{
-			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it does not exist.`);
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`);
 			return false;
 		}
 
-		let tmpRenderDestinationAddress = (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
-			(typeof (tmpRenderable.ContentDestinationAddress) === 'string') ? tmpRenderable.ContentDestinationAddress :
-				(typeof (this.options.DefaultDestinationAddress) === 'string') ? this.options.DefaultDestinationAddress : false;
-
-		if (!tmpRenderDestinationAddress)
+		if (!tmpRenderable.ContentDestinationAddress)
 		{
-			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderable}) because it does not have a valid destination address.`);
+			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not have a valid destination address.`);
 			return false;
 		}
 
@@ -543,31 +588,34 @@ class PictView extends libFableServiceBase
 		}
 
 		// Execute the developer-overridable pre-render behavior
-		this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord);
+		this.onBeforeRender(tmpRenderable);
 
 		if (this.pict.LogControlFlow)
 		{
-			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateRecordAddress[${tmpRecordAddress}] render:`);
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderable.ContentDestinationAddress}] TemplateRecordAddress[${tmpRecordAddress}] render:`);
 		}
 		if (this.pict.LogNoisiness > 0)
 		{
-			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Render of Renderable[${tmpRenderableHash}] to Destination [${tmpRenderDestinationAddress}]...`);
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Beginning Render of Renderable[${tmpRenderableHash}] to Destination [${tmpRenderable.ContentDestinationAddress}]...`);
 		}
 		// Generate the content output from the template and data
-		let tmpContent = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this], pScope);
+		tmpRenderable.Content = this.pict.parseTemplateByHash(tmpRenderable.TemplateHash, tmpRecord, null, [this], pScope, { RootRenderable: typeof pRootRenderable === 'object' ? pRootRenderable : tmpRenderable });
 
 		if (this.pict.LogNoisiness > 0)
 		{
-			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${tmpContent.length} to Destination [${tmpRenderDestinationAddress}] using render method [${tmpRenderable.RenderMethod}].`);
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${tmpRenderable.Content.length} to Destination [${tmpRenderable.ContentDestinationAddress}] using render method [${tmpRenderable.RenderMethod}].`);
 		}
 
-		// Assign the content to the destination address
-		this.pict.ContentAssignment.projectContent(tmpRenderable.RenderMethod, tmpRenderDestinationAddress, tmpContent, tmpRenderable.TestAddress);
+		this.onBeforeProject(tmpRenderable);
+		this.onProject(tmpRenderable);
 
-		// Execute the developer-overridable post-render behavior
-		this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
+		if (tmpRenderable.RenderMethod !== 'virtual-assignment')
+		{
+			this.onAfterProject(tmpRenderable);
 
-		this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
+			// Execute the developer-overridable post-render behavior
+			this.onAfterRender(tmpRenderable);
+		}
 
 		return true;
 	}
@@ -578,13 +626,14 @@ class PictView extends libFableServiceBase
 	 * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
 	 * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
 	 * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @param {Renderable|ErrorCallback} [pRootRenderable] - The root renderable for the render operation, if applicable.
 	 * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
 	 *
 	 * @return {void}
 	 */
-	renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
+	renderAsync(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, pRootRenderable, fCallback)
 	{
-		return this.renderWithScopeAsync(this, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback);
+		return this.renderWithScopeAsync(this, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, pRootRenderable, fCallback);
 	}
 
 	/**
@@ -594,11 +643,12 @@ class PictView extends libFableServiceBase
 	 * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
 	 * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
 	 * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+	 * @param {Renderable|ErrorCallback} [pRootRenderable] - The root renderable for the render operation, if applicable.
 	 * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
 	 *
 	 * @return {void}
 	 */
-	renderWithScopeAsync(pScope, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, fCallback)
+	renderWithScopeAsync(pScope, pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress, pRootRenderable, fCallback)
 	{
 		let tmpRenderableHash = (typeof (pRenderableHash) === 'string') ? pRenderableHash :
 			(typeof (this.options.DefaultRenderable) == 'string') ? this.options.DefaultRenderable : false;
@@ -609,6 +659,7 @@ class PictView extends libFableServiceBase
 							(typeof(pTemplateRecordAddress) === 'function') ? pTemplateRecordAddress :
 							(typeof(pRenderDestinationAddress) === 'function') ? pRenderDestinationAddress :
 							(typeof(pRenderableHash) === 'function') ? pRenderableHash :
+							(typeof(pRootRenderable) === 'function') ? pRootRenderable :
 							null;
 
 		if (!tmpCallback)
@@ -629,19 +680,32 @@ class PictView extends libFableServiceBase
 			return tmpCallback(new Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not asynchronously render ${tmpRenderableHash} (param ${pRenderableHash}because it is not a valid renderable.`));
 		}
 
+		/** @type {Renderable} */
 		let tmpRenderable;
 		if (tmpRenderableHash == '__Virtual')
 		{
 			tmpRenderable = {
-					RenderableHash: '__Virtual',
-					TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
-					DestinationAddress: pRenderDestinationAddress,
-					RenderMethod: 'virtual-assignment'
-				};
+				RenderableHash: '__Virtual',
+				TemplateHash: this.renderables[this.options.DefaultRenderable].TemplateHash,
+				ContentDestinationAddress: (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress : (typeof (this.options.DefaultDestinationAddress) === 'string') ? this.options.DefaultDestinationAddress : null,
+				RenderMethod: 'virtual-assignment',
+				TransactionHash: pRootRenderable && typeof pRootRenderable !== 'function' && pRootRenderable.TransactionHash,
+				RootRenderableViewHash: pRootRenderable && typeof pRootRenderable !== 'function' && pRootRenderable.RootRenderableViewHash,
+			};
 		}
 		else
 		{
-			tmpRenderable = this.renderables[tmpRenderableHash];
+			tmpRenderable = Object.assign({}, this.renderables[tmpRenderableHash]);
+			tmpRenderable.ContentDestinationAddress = (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
+				(typeof (tmpRenderable.ContentDestinationAddress) === 'string') ? tmpRenderable.ContentDestinationAddress :
+				(typeof (this.options.DefaultDestinationAddress) === 'string') ? this.options.DefaultDestinationAddress : null;
+		}
+
+		if (!tmpRenderable.TransactionHash)
+		{
+			tmpRenderable.TransactionHash = `ViewRender-V-${this.options.ViewIdentifier}-R-${tmpRenderableHash}-U-${this.pict.getUUID()}`;
+			tmpRenderable.RootRenderableViewHash = this.Hash;
+			this.pict.TransactionTracking.registerTransaction(tmpRenderable.TransactionHash);
 		}
 
 		if (!tmpRenderable)
@@ -650,11 +714,7 @@ class PictView extends libFableServiceBase
 			return tmpCallback(new Error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not exist.`));
 		}
 
-		let tmpRenderDestinationAddress = (typeof (pRenderDestinationAddress) === 'string') ? pRenderDestinationAddress :
-			(typeof (tmpRenderable.ContentDestinationAddress) === 'string') ? tmpRenderable.ContentDestinationAddress :
-				(typeof (this.options.DefaultDestinationAddress) === 'string') ? this.options.DefaultDestinationAddress : false;
-
-		if (!tmpRenderDestinationAddress)
+		if (!tmpRenderable.ContentDestinationAddress)
 		{
 			this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render ${tmpRenderableHash} (param ${pRenderableHash}) because it does not have a valid destination address.`);
 			return tmpCallback(new Error(`Could not render ${tmpRenderableHash}`));
@@ -679,7 +739,7 @@ class PictView extends libFableServiceBase
 
 		if (this.pict.LogControlFlow)
 		{
-			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderDestinationAddress}] TemplateRecordAddress[${tmpRecordAddress}] renderAsync:`);
+			this.log.trace(`PICT-ControlFlow VIEW [${this.UUID}]::[${this.Hash}] Renderable[${tmpRenderableHash}] Destination[${tmpRenderable.ContentDestinationAddress}] TemplateRecordAddress[${tmpRecordAddress}] renderAsync:`);
 		}
 		if (this.pict.LogNoisiness > 2)
 		{
@@ -691,11 +751,9 @@ class PictView extends libFableServiceBase
 		tmpAnticipate.anticipate(
 			(fOnBeforeRenderCallback) =>
 			{
-				this.onBeforeRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord);
-				this.onBeforeRenderAsync(fOnBeforeRenderCallback);
+				this.onBeforeRenderAsync(fOnBeforeRenderCallback, tmpRenderable);
 			});
 
-		let tmpContent;
 		tmpAnticipate.anticipate(
 			(fAsyncTemplateCallback) =>
 			{
@@ -708,27 +766,34 @@ class PictView extends libFableServiceBase
 							this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} could not render (asynchronously) ${tmpRenderableHash} (param ${pRenderableHash}) because it did not parse the template.`, pError);
 							return fAsyncTemplateCallback(pError);
 						}
-						tmpContent = pContent;
+						tmpRenderable.Content = pContent;
 
-						if (this.pict.LogNoisiness > 0)
-						{
-							this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${tmpRenderableHash}] content length ${pContent.length} to Destination [${tmpRenderDestinationAddress}] using Async render method ${tmpRenderable.RenderMethod}.`);
-						}
-
-						this.pict.ContentAssignment.projectContent(tmpRenderable.RenderMethod, tmpRenderDestinationAddress, pContent, tmpRenderable.TestAddress);
-
-						// Execute the developer-overridable asynchronous post-render behavior
-						this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
 						return fAsyncTemplateCallback();
-					}, [this], pScope);
+					}, [this], pScope, { RootRenderable: typeof pRootRenderable === 'object' ? pRootRenderable : tmpRenderable });
 			});
 
-		tmpAnticipate.anticipate(
-			(fOnAfterRenderCallback) =>
+		tmpAnticipate.anticipate((fNext) =>
+		{
+			this.onBeforeProjectAsync(fNext, tmpRenderable);
+		});
+		tmpAnticipate.anticipate((fNext) =>
+		{
+			this.onProjectAsync(fNext, tmpRenderable);
+		});
+
+		if (tmpRenderable.RenderMethod !== 'virtual-assignment')
+		{
+			tmpAnticipate.anticipate((fNext) =>
 			{
-				this.onAfterRender(tmpRenderable, tmpRenderDestinationAddress, tmpRecord, tmpContent);
-				this.onAfterRenderAsync(fOnAfterRenderCallback);
+				this.onAfterProjectAsync(fNext, tmpRenderable);
 			});
+
+			// Execute the developer-overridable post-render behavior
+			tmpAnticipate.anticipate((fNext) =>
+			{
+				this.onAfterRenderAsync(fNext, tmpRenderable);
+			});
+		}
 
 		tmpAnticipate.wait(tmpCallback);
 	}
@@ -765,7 +830,7 @@ class PictView extends libFableServiceBase
 		let tmpRenderOptions = this.buildRenderOptions(pRenderableHash, pRenderDestinationAddress, pTemplateRecordAddress);
 		if (tmpRenderOptions.Valid)
 		{
-			this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this], pScope));
+			this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, this.pict.parseTemplateByHash(tmpRenderOptions.Renderable.TemplateHash, tmpRenderOptions.Record, null, [this], pScope, { RootRenderable: tmpRenderOptions.Renderable }));
 			return true;
 		}
 		else
@@ -832,7 +897,7 @@ class PictView extends libFableServiceBase
 
 					this.assignRenderContent(tmpRenderOptions.Renderable, tmpRenderOptions.DestinationAddress, pContent);
 					return tmpCallback();
-				}, [this], pScope);
+				}, [this], pScope, { RootRenderable: tmpRenderOptions.Renderable });
 		}
 		else
 		{
@@ -843,18 +908,69 @@ class PictView extends libFableServiceBase
 	}
 
 	/**
+	 * @param {Renderable} pRenderable - The renderable that was rendered.
+	 */
+	onProject(pRenderable)
+	{
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onProject:`);
+		}
+		if (pRenderable.RenderMethod === 'virtual-assignment')
+		{
+			this.pict.TransactionTracking.pushToTransactionQueue(pRenderable.TransactionHash, { ViewHash: this.Hash, Renderable: pRenderable }, 'Deferred-Post-Content-Assignment');
+		}
+
+		if (this.pict.LogNoisiness > 0)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} Assigning Renderable[${pRenderable.RenderableHash}] content length ${pRenderable.Content.length} to Destination [${pRenderable.ContentDestinationAddress}] using Async render method ${pRenderable.RenderMethod}.`);
+		}
+
+		// Assign the content to the destination address
+		this.pict.ContentAssignment.projectContent(pRenderable.RenderMethod, pRenderable.ContentDestinationAddress, pRenderable.Content, pRenderable.TestAddress);
+
+		this.lastRenderedTimestamp = this.pict.log.getTimeStamp();
+	}
+
+	/**
+	 * Lifecycle hook that triggers after the view is projected into the DOM (async flow).
+	 *
+	 * @param {(error?: Error, content?: string) => void} fCallback - The callback to call when the async operation is complete.
+	 * @param {Renderable} pRenderable - The renderable that is being projected.
+	 */
+	onProjectAsync(fCallback, pRenderable)
+	{
+		this.onProject(pRenderable);
+		return fCallback();
+	}
+
+	/**
 	 * Lifecycle hook that triggers after the view is rendered.
 	 *
 	 * @param {Renderable} pRenderable - The renderable that was rendered.
-	 * @param {string} pRenderDestinationAddress - The address where the renderable was rendered.
-	 * @param {any} pRecord - The record (data) that was used by the renderable.
-	 * @param {string} pContent - The content that was rendered.
 	 */
-	onAfterRender(pRenderable, pRenderDestinationAddress, pRecord, pContent)
+	onAfterRender(pRenderable)
 	{
 		if (this.pict.LogNoisiness > 3)
 		{
 			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterRender:`);
+		}
+		if (pRenderable && pRenderable.RootRenderableViewHash === this.Hash)
+		{
+			const tmpTransactionQueue = this.pict.TransactionTracking.clearTransactionQueue(pRenderable.TransactionHash) || [];
+			for (const tmpEvent of tmpTransactionQueue)
+			{
+				const tmpView = this.pict.views[tmpEvent.Data.ViewHash];
+				if (!tmpView)
+				{
+					this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterRender: Could not find view for transaction hash ${pRenderable.TransactionHash} and ViewHash ${tmpEvent.Data.ViewHash}.`);
+					continue;
+				}
+				tmpView.onAfterProject();
+
+				// Execute the developer-overridable post-render behavior
+				tmpView.onAfterRender(tmpEvent.Data.Renderable);
+			}
 		}
 		return true;
 	}
@@ -863,8 +979,57 @@ class PictView extends libFableServiceBase
 	 * Lifecycle hook that triggers after the view is rendered (async flow).
 	 *
 	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 * @param {Renderable} pRenderable - The renderable that was rendered.
 	 */
-	onAfterRenderAsync(fCallback)
+	onAfterRenderAsync(fCallback, pRenderable)
+	{
+		this.onAfterRender(pRenderable);
+		const tmpAnticipate = this.fable.newAnticipate();
+		if (pRenderable && pRenderable.RootRenderableViewHash === this.Hash)
+		{
+			const queue = this.pict.TransactionTracking.clearTransactionQueue(pRenderable.TransactionHash) || [];
+			for (const event of queue)
+			{
+				/** @type {PictView} */
+				const tmpView = this.pict.views[event.Data.ViewHash];
+				if (!tmpView)
+				{
+					this.log.error(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterRenderAsync: Could not find view for transaction hash ${pRenderable.TransactionHash} and ViewHash ${event.Data.ViewHash}.`);
+					continue;
+				}
+				tmpAnticipate.anticipate(tmpView.onAfterProjectAsync.bind(tmpView));
+				tmpAnticipate.anticipate((fNext) =>
+				{
+					tmpView.onAfterRenderAsync(fNext, event.Data.Renderable);
+				});
+
+				// Execute the developer-overridable post-render behavior
+			}
+		}
+		return tmpAnticipate.wait(fCallback);
+	}
+
+	/**
+	 * Lifecycle hook that triggers after the view is projected into the DOM.
+	 *
+	 * @param {Renderable} pRenderable - The renderable that was projected.
+	 */
+	onAfterProject(pRenderable)
+	{
+		if (this.pict.LogNoisiness > 3)
+		{
+			this.log.trace(`PictView [${this.UUID}]::[${this.Hash}] ${this.options.ViewIdentifier} onAfterProject:`);
+		}
+		return true;
+	}
+
+	/**
+	 * Lifecycle hook that triggers after the view is projected into the DOM (async flow).
+	 *
+	 * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+	 * @param {Renderable} pRenderable - The renderable that was projected.
+	 */
+	onAfterProjectAsync(fCallback, pRenderable)
 	{
 		return fCallback();
 	}

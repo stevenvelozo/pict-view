@@ -2,17 +2,20 @@ export = PictView;
 /** @typedef {(error?: Error) => void} ErrorCallback */
 /** @typedef {number | boolean} PictTimestamp */
 /**
- * @typedef {'replace' | 'append' | 'prepend' | 'append_once'} RenderMethod
+ * @typedef {'replace' | 'append' | 'prepend' | 'append_once' | 'virtual-assignment'} RenderMethod
  */
 /**
  * @typedef {Object} Renderable
  *
  * @property {string} RenderableHash - A unique hash for the renderable.
- * @property {string} TemplateHash] - The hash of the template to use for rendering this renderable.
+ * @property {string} TemplateHash - The hash of the template to use for rendering this renderable.
  * @property {string} [DefaultTemplateRecordAddress] - The default address for resolving the data record for this renderable.
  * @property {string} [ContentDestinationAddress] - The default address (DOM CSS selector) for rendering the content of this renderable.
- * @property {RenderMethod} [RenderMethod=replace] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
+ * @property {RenderMethod} [RenderMethod=replace] - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once', 'virtual-assignment').
  * @property {string} [TestAddress] - The address to use for testing the renderable.
+ * @property {string} [TransactionHash] - The transaction hash for the root renderable.
+ * @property {string} [RootRenderableViewHash] - The hash of the root renderable.
+ * @property {string} [Content] - The rendered content for this renderable, if applicable.
  */
 /**
  * Represents a view in the Pict ecosystem.
@@ -37,10 +40,12 @@ declare class PictView {
     serviceType: string;
     /** @type {Record<string, any>} */
     _Package: Record<string, any>;
-    /** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any }} */
+    /** @type {import('pict') & { log: any, instantiateServiceProviderWithoutRegistration: (hash: String) => any, instantiateServiceProviderIfNotExists: (hash: string) => any, TransactionTracking: import('pict/types/source/services/Fable-Service-TransactionTracking') }} */
     pict: import("pict") & {
         log: any;
         instantiateServiceProviderWithoutRegistration: (hash: string) => any;
+        instantiateServiceProviderIfNotExists: (hash: string) => any;
+        TransactionTracking: import("pict/types/source/services/Fable-Service-TransactionTracking");
     };
     AppData: Record<string, any>;
     Bundle: Record<string, any>;
@@ -54,8 +59,8 @@ declare class PictView {
     lastMarshalFromViewTimestamp: PictTimestamp;
     /** @type {PictTimestamp} */
     lastMarshalToViewTimestamp: PictTimestamp;
-    /** @type {Object<String, Renderable>} */
-    renderables: any;
+    /** @type {Record<String, Renderable>} */
+    renderables: Record<string, Renderable>;
     /**
      * Adds a renderable to the view.
      *
@@ -107,16 +112,28 @@ declare class PictView {
      * Lifecycle hook that triggers before the view is rendered.
      *
      * @param {Renderable} pRenderable - The renderable that will be rendered.
-     * @param {string} pRenderDestinationAddress - The address where the renderable will be rendered.
-     * @param {any} pRecord - The record (data) that will be used to render the renderable.
      */
-    onBeforeRender(pRenderable: Renderable, pRenderDestinationAddress: string, pRecord: any): boolean;
+    onBeforeRender(pRenderable: Renderable): boolean;
     /**
      * Lifecycle hook that triggers before the view is rendered (async flow).
      *
      * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+     * @param {Renderable} pRenderable - The renderable that will be rendered.
      */
-    onBeforeRenderAsync(fCallback: ErrorCallback): void;
+    onBeforeRenderAsync(fCallback: ErrorCallback, pRenderable: Renderable): void;
+    /**
+     * Lifecycle hook that triggers before the view is projected into the DOM.
+     *
+     * @param {Renderable} pRenderable - The renderable that will be projected.
+     */
+    onBeforeProject(pRenderable: Renderable): boolean;
+    /**
+     * Lifecycle hook that triggers before the view is projected into the DOM (async flow).
+     *
+     * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+     * @param {Renderable} pRenderable - The renderable that will be projected.
+     */
+    onBeforeProjectAsync(fCallback: ErrorCallback, pRenderable: Renderable): void;
     /**
      * Builds the render options for a renderable.
      *
@@ -144,33 +161,36 @@ declare class PictView {
     /**
      * Render a renderable from this view.
      *
-     * @param {string} [pRenderable] - The hash of the renderable to render.
+     * @param {string} [pRenderableHash] - The hash of the renderable to render.
      * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
      * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+     * @param {Renderable} [pRootRenderable] - The root renderable for the render operation, if applicable.
      * @return {boolean}
      */
-    render(pRenderable?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object): boolean;
+    render(pRenderableHash?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object, pRootRenderable?: Renderable): boolean;
     /**
      * Render a renderable from this view, providing a specifici scope for the template.
      *
      * @param {any} pScope - The scope to use for the template rendering.
-     * @param {string} [pRenderable] - The hash of the renderable to render.
+     * @param {string} [pRenderableHash] - The hash of the renderable to render.
      * @param {string} [pRenderDestinationAddress] - The address where the renderable will be rendered.
      * @param {string|object} [pTemplateRecordAddress] - The address where the data for the template is stored.
+     * @param {Renderable} [pRootRenderable] - The root renderable for the render operation, if applicable.
      * @return {boolean}
      */
-    renderWithScope(pScope: any, pRenderable?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object): boolean;
+    renderWithScope(pScope: any, pRenderableHash?: string, pRenderDestinationAddress?: string, pTemplateRecordAddress?: string | object, pRootRenderable?: Renderable): boolean;
     /**
      * Render a renderable from this view.
      *
      * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
      * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
      * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+     * @param {Renderable|ErrorCallback} [pRootRenderable] - The root renderable for the render operation, if applicable.
      * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
      *
      * @return {void}
      */
-    renderAsync(pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | object | ErrorCallback, fCallback?: ErrorCallback): void;
+    renderAsync(pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | object | ErrorCallback, pRootRenderable?: Renderable | ErrorCallback, fCallback?: ErrorCallback): void;
     /**
      * Render a renderable from this view.
      *
@@ -178,11 +198,12 @@ declare class PictView {
      * @param {string|ErrorCallback} [pRenderableHash] - The hash of the renderable to render.
      * @param {string|ErrorCallback} [pRenderDestinationAddress] - The address where the renderable will be rendered.
      * @param {string|object|ErrorCallback} [pTemplateRecordAddress] - The address where the data for the template is stored.
+     * @param {Renderable|ErrorCallback} [pRootRenderable] - The root renderable for the render operation, if applicable.
      * @param {ErrorCallback} [fCallback] - The callback to call when the async operation is complete.
      *
      * @return {void}
      */
-    renderWithScopeAsync(pScope: any, pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | object | ErrorCallback, fCallback?: ErrorCallback): void;
+    renderWithScopeAsync(pScope: any, pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | object | ErrorCallback, pRootRenderable?: Renderable | ErrorCallback, fCallback?: ErrorCallback): void;
     /**
      * Renders the default renderable.
      *
@@ -218,20 +239,42 @@ declare class PictView {
      */
     basicRenderWithScopeAsync(pScope: any, pRenderableHash?: string | ErrorCallback, pRenderDestinationAddress?: string | ErrorCallback, pTemplateRecordAddress?: string | any | ErrorCallback, fCallback?: ErrorCallback): void;
     /**
+     * @param {Renderable} pRenderable - The renderable that was rendered.
+     */
+    onProject(pRenderable: Renderable): void;
+    /**
+     * Lifecycle hook that triggers after the view is projected into the DOM (async flow).
+     *
+     * @param {(error?: Error, content?: string) => void} fCallback - The callback to call when the async operation is complete.
+     * @param {Renderable} pRenderable - The renderable that is being projected.
+     */
+    onProjectAsync(fCallback: (error?: Error, content?: string) => void, pRenderable: Renderable): void;
+    /**
      * Lifecycle hook that triggers after the view is rendered.
      *
      * @param {Renderable} pRenderable - The renderable that was rendered.
-     * @param {string} pRenderDestinationAddress - The address where the renderable was rendered.
-     * @param {any} pRecord - The record (data) that was used by the renderable.
-     * @param {string} pContent - The content that was rendered.
      */
-    onAfterRender(pRenderable: Renderable, pRenderDestinationAddress: string, pRecord: any, pContent: string): boolean;
+    onAfterRender(pRenderable: Renderable): boolean;
     /**
      * Lifecycle hook that triggers after the view is rendered (async flow).
      *
      * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+     * @param {Renderable} pRenderable - The renderable that was rendered.
      */
-    onAfterRenderAsync(fCallback: ErrorCallback): void;
+    onAfterRenderAsync(fCallback: ErrorCallback, pRenderable: Renderable): any;
+    /**
+     * Lifecycle hook that triggers after the view is projected into the DOM.
+     *
+     * @param {Renderable} pRenderable - The renderable that was projected.
+     */
+    onAfterProject(pRenderable: Renderable): boolean;
+    /**
+     * Lifecycle hook that triggers after the view is projected into the DOM (async flow).
+     *
+     * @param {ErrorCallback} fCallback - The callback to call when the async operation is complete.
+     * @param {Renderable} pRenderable - The renderable that was projected.
+     */
+    onAfterProjectAsync(fCallback: ErrorCallback, pRenderable: Renderable): void;
     /**
      * Lifecycle hook that triggers before the view is solved.
      */
@@ -368,14 +411,14 @@ declare namespace PictView {
 }
 type ErrorCallback = (error?: Error) => void;
 type PictTimestamp = number | boolean;
-type RenderMethod = "replace" | "append" | "prepend" | "append_once";
+type RenderMethod = "replace" | "append" | "prepend" | "append_once" | "virtual-assignment";
 type Renderable = {
     /**
      * - A unique hash for the renderable.
      */
     RenderableHash: string;
     /**
-     * ] - The hash of the template to use for rendering this renderable.
+     * - The hash of the template to use for rendering this renderable.
      */
     TemplateHash: string;
     /**
@@ -387,12 +430,24 @@ type Renderable = {
      */
     ContentDestinationAddress?: string;
     /**
-     * - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once').
+     * - The method to use when projecting the renderable to the DOM ('replace', 'append', 'prepend', 'append_once', 'virtual-assignment').
      */
     RenderMethod?: RenderMethod;
     /**
      * - The address to use for testing the renderable.
      */
     TestAddress?: string;
+    /**
+     * - The transaction hash for the root renderable.
+     */
+    TransactionHash?: string;
+    /**
+     * - The hash of the root renderable.
+     */
+    RootRenderableViewHash?: string;
+    /**
+     * - The rendered content for this renderable, if applicable.
+     */
+    Content?: string;
 };
 //# sourceMappingURL=Pict-View.d.ts.map

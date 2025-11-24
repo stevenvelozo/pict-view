@@ -85,6 +85,14 @@ class PictView extends libFableServiceBase
 		/** @type {any} */
 		this.log;
 
+		const tmpHashIsUUID = this.Hash === this.UUID;
+		//NOTE: since many places are using the view UUID as the HTML element ID, we prefix it to avoid starting with a number
+		this.UUID = `V-${this.UUID}`;
+		if (tmpHashIsUUID)
+		{
+			this.Hash = this.UUID;
+		}
+
 		if (!this.options.ViewIdentifier)
 		{
 			this.options.ViewIdentifier = `AutoViewID-${this.fable.getUUID()}`;

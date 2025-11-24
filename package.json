@@ -1,6 +1,6 @@
 {
     "name": "pict-view",
-    "version": "1.0.63",
+    "version": "1.0.64",
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {
@@ -27,12 +27,12 @@
     },
     "homepage": "https://github.com/stevenvelozo/pict-view#readme",
     "devDependencies": {
-        "@eslint/js": "^9.28.0",
+        "@eslint/js": "^9.39.1",
         "browser-env": "^3.3.0",
-        "eslint": "^9.28.0",
-        "pict": "^1.0.292",
-        "quackage": "^1.0.42",
-        "typescript": "^5.8.3"
+        "eslint": "^9.39.1",
+        "pict": "^1.0.337",
+        "quackage": "^1.0.45",
+        "typescript": "^5.9.3"
     },
     "mocha": {
         "diff": true,
@@ -53,7 +53,7 @@
         ]
     },
     "dependencies": {
-        "fable": "^3.1.18",
+        "fable": "^3.1.46",
         "fable-serviceproviderbase": "^3.0.15"
     }
 }

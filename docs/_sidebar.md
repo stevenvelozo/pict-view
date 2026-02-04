@@ -1,14 +1,21 @@
-- Getting started
+- Getting Started
 
+  - [Introduction](/)
   - [Pict Views](Pict-Views.md)
-  - [Writing more pages](Historical Events Example App.md)
-  - [Custom navbar](custom-navbar.md)
-  - [Cover page](cover.md)
+  - [Renderables](Pict%20View%20Renderables.md)
+
+- Examples
+
+  - [Historical Events App](Historical%20Events%20Example%20App.md)
 
 - Customization
 
   - [Configuration](configuration.md)
-  - [Themes](themes.md)
+  - [Themes & Styling](themes.md)
+  - [Custom Navbar](custom-navbar.md)
 
-- [Awesome docsify](awesome.md)
-- [Changelog](changelog.md)
+- Reference
+
+  - [Resources](resources.md)
+  - [Contributing](contributing.md)
+  - [Changelog](changelog.md)

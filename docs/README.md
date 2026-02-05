@@ -80,9 +80,9 @@ Views follow a predictable lifecycle: Initialize -> Solve -> Render -> Marshal. 
 - [Configuration](configuration.md) - Configuration options reference
 - [Historical Events Example](Historical%20Events%20Example%20App.md) - A complete example application
 
-## Links
+## Related Packages
 
-- [GitHub Repository](https://github.com/stevenvelozo/pict-view)
-- [NPM Package](https://www.npmjs.com/package/pict-view)
-- [Pict Framework](https://github.com/stevenvelozo/pict)
-- [Fable](https://github.com/stevenvelozo/fable)
+- [pict](https://github.com/stevenvelozo/pict) - Core Pict framework
+- [pict-application](https://github.com/stevenvelozo/pict-application) - Application base class
+- [pict-provider](https://github.com/stevenvelozo/pict-provider) - Provider base class
+- [fable](https://github.com/stevenvelozo/fable) - Service provider framework

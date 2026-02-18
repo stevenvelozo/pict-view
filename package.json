@@ -30,8 +30,8 @@
         "@eslint/js": "^9.39.1",
         "browser-env": "^3.3.0",
         "eslint": "^9.39.1",
-        "pict": "^1.0.337",
-        "quackage": "^1.0.45",
+        "pict": "^1.0.348",
+        "quackage": "^1.0.51",
         "typescript": "^5.9.3"
     },
     "mocha": {
@@ -53,7 +53,7 @@
         ]
     },
     "dependencies": {
-        "fable": "^3.1.46",
-        "fable-serviceproviderbase": "^3.0.15"
+        "fable": "^3.1.57",
+        "fable-serviceproviderbase": "^3.0.18"
     }
 }

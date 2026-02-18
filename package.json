@@ -1,6 +1,6 @@
 {
     "name": "pict-view",
-    "version": "1.0.65",
+    "version": "1.0.66",
     "description": "Pict View Base Class",
     "main": "source/Pict-View.js",
     "scripts": {

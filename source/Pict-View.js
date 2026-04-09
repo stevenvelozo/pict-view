@@ -979,6 +979,10 @@ class PictView extends libFableServiceBase
 				// Execute the developer-overridable post-render behavior
 				tmpView.onAfterRender(tmpEvent.Data.Renderable);
 			}
+			// Queue is drained and nested child renders have each cleaned up
+			// their own transactions; remove this root render's entry from
+			// the tracking map so it does not leak.
+			this.pict.TransactionTracking.unregisterTransaction(pRenderable.TransactionHash);
 		}
 		return true;
 	}
@@ -991,9 +995,17 @@ class PictView extends libFableServiceBase
 	 */
 	onAfterRenderAsync(fCallback, pRenderable)
 	{
+		// NOTE: this.onAfterRender(pRenderable) will itself clear the
+		// transaction queue and unregister the transaction if this view is
+		// the root renderable - see onAfterRender above. So by the time the
+		// loop below runs, the queue is already empty and there is nothing
+		// to drain. Keeping the async queue walk here defensively in case
+		// future subclasses override onAfterRender in ways that skip the
+		// drain, but the common path is now "sync drain, async no-op".
 		this.onAfterRender(pRenderable);
 		const tmpAnticipate = this.fable.newAnticipate();
-		if (pRenderable && pRenderable.RootRenderableViewHash === this.Hash)
+		const tmpIsRootRenderable = pRenderable && pRenderable.RootRenderableViewHash === this.Hash;
+		if (tmpIsRootRenderable)
 		{
 			const queue = this.pict.TransactionTracking.clearTransactionQueue(pRenderable.TransactionHash) || [];
 			for (const event of queue)
@@ -1014,7 +1026,20 @@ class PictView extends libFableServiceBase
 				// Execute the developer-overridable post-render behavior
 			}
 		}
-		return tmpAnticipate.wait(fCallback);
+		return tmpAnticipate.wait((pError) =>
+		{
+			// Nested virtual-assignment children have now settled their own
+			// onAfterRenderAsync chains (and unregistered their own
+			// transactions along the way). Ensure this root render's entry
+			// is also gone - unregisterTransaction is a no-op if the sync
+			// onAfterRender above already removed it, so this is safe to
+			// call unconditionally on the root path.
+			if (tmpIsRootRenderable && pRenderable && pRenderable.TransactionHash)
+			{
+				this.pict.TransactionTracking.unregisterTransaction(pRenderable.TransactionHash);
+			}
+			return fCallback(pError);
+		});
 	}
 
 	/**

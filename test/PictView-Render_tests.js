@@ -214,6 +214,75 @@ suite
 								)
 							}
 						);
+					test(
+							'Render lifecycle unregisters its transaction (sync path, regression guard for leak in Pict-View.onAfterRender).',
+							(fDone) =>
+							{
+								let _Pict = new libPict();
+								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
+
+								viewHistoricEventsCategories.marshal_JSONData_Into_Object(dataHistoricEvents, _Pict.AppData);
+								let _PictView = _Pict.addView('HistoricEventsCategories', {}, viewHistoricEventsCategories);
+
+								// Baseline: capture the set of transaction keys that exist before we render.
+								const tmpBaselineKeys = new Set(Object.keys(_Pict.TransactionTracking.transactions));
+
+								Expect(_PictView.render()).to.equal(true);
+
+								// After a full sync render cycle, no new ViewRender-* entries
+								// should remain in the transaction map.
+								const tmpLeakedKeys = Object.keys(_Pict.TransactionTracking.transactions)
+									.filter((pKey) => !tmpBaselineKeys.has(pKey));
+								Expect(tmpLeakedKeys, `sync render leaked ${tmpLeakedKeys.length} transaction(s): ${tmpLeakedKeys.join(', ')}`).to.have.lengthOf(0);
+
+								return fDone();
+							}
+						);
+					test(
+							'Render lifecycle unregisters its transaction (async path, regression guard for leak in Pict-View.onAfterRenderAsync).',
+							(fDone) =>
+							{
+								let _Pict = new libPict();
+								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
+
+								viewHistoricEventsCategories.marshal_JSONData_Into_Object(dataHistoricEvents, _Pict.AppData);
+								let _PictView = _Pict.addView('HistoricEventsCategories', {}, viewHistoricEventsCategories);
+
+								const tmpBaselineKeys = new Set(Object.keys(_Pict.TransactionTracking.transactions));
+
+								_PictView.renderAsync((pError) =>
+								{
+									Expect(pError).to.be.undefined;
+									const tmpLeakedKeys = Object.keys(_Pict.TransactionTracking.transactions)
+										.filter((pKey) => !tmpBaselineKeys.has(pKey));
+									Expect(tmpLeakedKeys, `async render leaked ${tmpLeakedKeys.length} transaction(s): ${tmpLeakedKeys.join(', ')}`).to.have.lengthOf(0);
+									return fDone();
+								});
+							}
+						);
+					test(
+							'Repeated renders do not accumulate transaction map entries.',
+							(fDone) =>
+							{
+								let _Pict = new libPict();
+								let _PictEnvironment = new libPict.EnvironmentLog(_Pict);
+
+								viewHistoricEventsCategories.marshal_JSONData_Into_Object(dataHistoricEvents, _Pict.AppData);
+								let _PictView = _Pict.addView('HistoricEventsCategories', {}, viewHistoricEventsCategories);
+
+								const tmpBaselineSize = Object.keys(_Pict.TransactionTracking.transactions).length;
+
+								for (let i = 0; i < 20; i++)
+								{
+									_PictView.render();
+								}
+
+								const tmpAfterSize = Object.keys(_Pict.TransactionTracking.transactions).length;
+								Expect(tmpAfterSize, `transactionMap grew from ${tmpBaselineSize} to ${tmpAfterSize} after 20 renders`).to.equal(tmpBaselineSize);
+
+								return fDone();
+							}
+						);
 				}
 			);
 	}

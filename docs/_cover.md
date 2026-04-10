@@ -1,4 +1,4 @@
-# Pict-View <small>1</small>
+# Pict-View
 
 > A flexible View base class for the Pict application framework
 

@@ -16,7 +16,7 @@ Each redord in the data set has zero, one or two categories. These categories ar
 ```json
 {
     "date": "1158/11/29",
-    "description": "Spain: Raymundo, abbot of the Fitero Abbey (Navarra), pledges to defend the fortress of Calatrava from incoming Muslim raiders. It is the founding moment of the Order of Calatrava, the spearhead of the Iberian armies during the Reconquista.ampref name=estow1982amp{{cite journal|last=Estow|first=Clara|title=The Economic Development of the Order of Calatrava, 1158-1366|journal=Speculum|year=1982|volume=57|issue=2|pages=267–291}}ampamp",
+    "description": "Spain: Raymundo, abbot of the Fitero Abbey (Navarra), pledges to defend the fortress of Calatrava from incoming Muslim raiders. It is the founding moment of the Order of Calatrava, the spearhead of the Iberian armies during the Reconquista.ampref name=estow1982amp{{cite journal|last=Estow|first=Clara|title=The Economic Development of the Order of Calatrava, 1158-1366|journal=Speculum|year=1982|volume=57|issue=2|pages=267-291}}ampamp",
     "lang": "en",
     "category1": "By place",
     "category2": "Europe",
@@ -60,7 +60,7 @@ How would I use a PICT View to do this? Easy! We would create a simple custom vi
 
 A complete view for categories.
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
-### 📄 example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
+###  example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
 <!-- collapsed -->
 
 ```javascript
@@ -142,7 +142,7 @@ A complete view for categories.
 
 A function that enumerates the category list and calculates basic statistics.
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
-### 📄 example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
+###  example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
 <!-- collapsed -->
 
 ```javascript

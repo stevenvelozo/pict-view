@@ -13,7 +13,7 @@ Renderables are defined by the view configuration, and have four parameters. An 
 
 Historical Events Example App - Category List Renderable
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
-### 📄 example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
+###  example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
 ```javascript
 51     		{
 52     			RenderableHash: "HistoricalEventCategory-List",
@@ -71,7 +71,7 @@ The most basic way to add renderables to a view is by defining it in the array o
 
 The Renderable configuration(s) for our basic app's category view:
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
-### 📄 example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
+###  example_applications/historic_events_example/views/PictView-HistoricalEvents-Categories.js
 ```javascript
 50     	Renderables: [
 51     		{
